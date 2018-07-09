@@ -1,7 +1,7 @@
 {
-  "name": "erc20-tokens",
+  "name": "token_one",
   "version": "0.0.1",
-  "description": "Ethereum Token Contracts",
+  "description": "token_one contracts",
   "main": "truffle.js",
   "directories": {
     "test": "test"
@@ -19,20 +19,19 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ConsenSys/Tokens.git"
+    "url": "git+https://github.com/ProtocolONE/token_one.git"
   },
   "keywords": [
     "ethereum"
   ],
   "authors": [
-    "Simon de la Rouviere <simon.delarouviere@consensys.net>",
-    "Joseph Chow <joseph.chow@consensys.net>"
+    "Kirill Vostretsov <kirill.vostretsov@protocol.one>"
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ConsenSys/Tokens/issues"
+    "url": "https://github.com/ProtocolONE/token_one/issues"
   },
-  "homepage": "https://github.com/ConsenSys/Tokens#readme",
+  "homepage": "https://github.com/ProtocolONE/token_one#readme",
   "dependencies": {
     "truffle": "4.1.5",
     "truffle-hdwallet-provider": "0.0.3"
