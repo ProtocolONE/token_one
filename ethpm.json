@@ -1,10 +1,10 @@
 {
-  "package_name": "tokens",
+  "package_name": "token_one",
   "version": "1.0.0",
-  "description": "Ethereum Token Contracts",
+  "description": "Ethereum Protocol ONE Token Contracts",
   "authors": [
-    "Simon de la Rouviere <simon.delarouviere@consensys.net>",
-    "Joseph Chow <joseph.chow@consensys.net>"
+    "Kirill Vostretsov <kirill.vostretsov@protocol.one>",
+    "Nikolay Bondarenko <nikolay.bondarenko@protocol.one>"
   ],
   "keywords": [
     "tokens",
