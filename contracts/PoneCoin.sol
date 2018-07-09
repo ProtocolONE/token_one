@@ -1,8 +1,8 @@
 pragma solidity ^0.4.19;
 
-import 'zeppelin-solidity/contracts/token/ERC20/MintableToken.sol';
+import 'zeppelin-solidity/contracts/token/ERC20/StandardToken.sol';
 
-contract PoneCoin is MintableToken {
+contract PoneCoin is StandardToken {
     string public name = "PONE COIN";
     string public symbol = "ONE";
     uint8 public decimals = 0;
