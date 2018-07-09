@@ -1,8 +1,8 @@
 pragma solidity ^0.4.19;
 
-import './PoneCoin.sol';
-import 'zeppelin-solidity/contracts/crowdsale/validation/WhitelistedCrowdsale.sol';
-import 'zeppelin-solidity/contracts/crowdsale/validation/TimedCrowdsale.sol';
+import "openzeppelin-solidity/contracts/crowdsale/validation/WhitelistedCrowdsale.sol";
+import "openzeppelin-solidity/contracts/crowdsale/validation/TimedCrowdsale.sol";
+import "./PoneCoin.sol";
 
 contract PoneCoinCrowdsale is TimedCrowdsale, WhitelistedCrowdsale {
 
