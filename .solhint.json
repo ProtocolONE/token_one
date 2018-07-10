@@ -5,7 +5,7 @@
       "avoid-suicide": "error",
       "avoid-sha3": "warn",
       "compiler-fixed": false,
-      "indent": ["warn", 4],
+      "indent": ["warn", 2],
       "max-line-length": 150,
       "var-name-mixedcase": false,
       "func-param-name-mixedcase": false
