@@ -1,13 +1,12 @@
 pragma solidity ^0.4.19;
 
-import "openzeppelin-solidity/contracts/crowdsale/emission/MintedCrowdsale.sol";
 import "openzeppelin-solidity/contracts/crowdsale/distribution/FinalizableCrowdsale.sol";
 import "openzeppelin-solidity/contracts/crowdsale/validation/CappedCrowdsale.sol";
 import "openzeppelin-solidity/contracts/crowdsale/validation/TimedCrowdsale.sol";
 import "./OneSmartToken.sol";
 
 
-contract OneCrowdsale is MintedCrowdsale, TimedCrowdsale, CappedCrowdsale, FinalizableCrowdsale {
+contract OneCrowdsale is TimedCrowdsale, CappedCrowdsale, FinalizableCrowdsale {
   
   //TODO Remove structure to plain mapping
   struct User {
@@ -157,6 +156,20 @@ contract OneCrowdsale is MintedCrowdsale, TimedCrowdsale, CappedCrowdsale, Final
     
   }
   
+  /**
+  * @dev Overrides delivery by minting tokens upon purchase.
+  * @param _beneficiary Token purchaser
+  * @param _tokenAmount Number of tokens to be minted
+  */
+  function _deliverTokens(
+    address _beneficiary,
+    uint256 _tokenAmount
+  )
+  internal
+  {
+    require(MintableToken(token).mint(_beneficiary, _tokenAmount));
+  }
+  
   //@Override
   function finalization() internal onlyOwner {
     super.finalization();
@@ -168,17 +181,17 @@ contract OneCrowdsale is MintedCrowdsale, TimedCrowdsale, CappedCrowdsale, Final
     uint256 newTotalSupply = token.totalSupply().mul(41).div(59);
     
     // 12% of the total number of ONE tokens will be allocated to the team and SDK developers
-    MintableToken(token).mint(walletTeam, newTotalSupply.mul(12).div(100));
+    _deliverTokens(walletTeam, newTotalSupply.mul(12).div(100));
     
     // 3% of the total number of ONE tokens will be allocated to professional fees and Bounties
-    MintableToken(token).mint(walletAdvisers, newTotalSupply.mul(3).div(100));
+    _deliverTokens(walletAdvisers, newTotalSupply.mul(3).div(100));
     
     // 15% of the total number of ONE tokens will be allocated to Protocol One founders
-    MintableToken(token).mint(walletFounders, newTotalSupply.mul(15).div(100));
+    _deliverTokens(walletFounders, newTotalSupply.mul(15).div(100));
     
     // 10% of the total number of ONE tokens will be allocated to Protocol One,
     // and as a reserve for the company to be used for future strategic plans for the created ecosystem
-    MintableToken(token).mint(walletReserve, newTotalSupply.mul(10).div(100));
+    _deliverTokens(walletReserve, newTotalSupply.mul(10).div(100));
   }
 }
 
