@@ -9,6 +9,7 @@ import "./OneSmartToken.sol";
 
 contract OneCrowdsale is MintedCrowdsale, TimedCrowdsale, CappedCrowdsale, FinalizableCrowdsale {
   
+  //TODO Remove structure to plain mapping
   struct User {
     address _bonusPart;
     address _bonusCommission;
