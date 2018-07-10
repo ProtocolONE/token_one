@@ -1,4 +1,4 @@
-const GamenetCoin = artifacts.require('./PoneCoin.sol');
+const GamenetCoin = artifacts.require('./OneSmartToken.sol');
 const GamenetCoinCrowdsale = artifacts.require('./GamenetCoinCrowdsale.sol');
 
 module.exports = function (deployer, network, accounts) {
