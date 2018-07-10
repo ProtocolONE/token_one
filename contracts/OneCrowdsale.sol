@@ -26,6 +26,7 @@ contract OneCrowdsale is TimedCrowdsale, CappedCrowdsale, FinalizableCrowdsale {
   address public walletFounders;
   address public walletReserve;
   
+  address[] public presaleBeneficiaryMapKeys;
   mapping(address => User) public presaleBeneficiary;
   
   /**
@@ -89,6 +90,8 @@ contract OneCrowdsale is TimedCrowdsale, CappedCrowdsale, FinalizableCrowdsale {
     presaleBeneficiary[_beneficiary]._poneTokensToTransfer = _poneTokensToTransfer;
     presaleBeneficiary[_beneficiary]._kycFlag = _kycFlag;
     presaleBeneficiary[_beneficiary]._isWhitelisted = true;
+
+    presaleBeneficiaryMapKeys.push(_beneficiary);
   }
 
   function requestOnInvoiceTransfer(
@@ -103,6 +106,9 @@ contract OneCrowdsale is TimedCrowdsale, CappedCrowdsale, FinalizableCrowdsale {
   )
     public onlyOwner
   {
+    require(_beneficiary != address(0));
+    require(_tokensToTransfer > 0);
+    
     presaleBeneficiary[_beneficiary]._bonusBeneficiary = _bonusBeneficiary;
     presaleBeneficiary[_beneficiary]._bonusCommissionBeneficiary = _bonusCommissionBeneficiary;
     presaleBeneficiary[_beneficiary]._bonusPercent = _bonusPercent;
@@ -111,6 +117,8 @@ contract OneCrowdsale is TimedCrowdsale, CappedCrowdsale, FinalizableCrowdsale {
     presaleBeneficiary[_beneficiary]._invoiceId = _invoiceId;
     presaleBeneficiary[_beneficiary]._kycFlag = _kycFlag;
     presaleBeneficiary[_beneficiary]._isWhitelisted = true;
+  
+    presaleBeneficiaryMapKeys.push(_beneficiary);
   }
   
   function makeBonusPaymanet() internal {
@@ -159,6 +167,9 @@ contract OneCrowdsale is TimedCrowdsale, CappedCrowdsale, FinalizableCrowdsale {
     super.finalization();
     
     //TODO  bonuses for the pre crowdsale grantees:
+    for (uint256 i = 0; i < presaleBeneficiaryMapKeys.length; i++) {
+    
+    }
     
     // Adding 41% of the total token supply (59% were generated during the crowdsale)
     // using a simple rule of proportion
