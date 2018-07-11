@@ -6,7 +6,18 @@ import "openzeppelin-solidity/contracts/crowdsale/validation/CappedCrowdsale.sol
 import "openzeppelin-solidity/contracts/crowdsale/validation/TimedCrowdsale.sol";
 import "./OneSmartToken.sol";
 
-
+/**
+* In 2018 and in real world a huge amount of conditions required to success processing
+* private round investments.
+*
+* We do not want to
+* 1. Do any kind of non blockchain related investors cabinets
+* 2. Do any kind of manual operations for wei/ONE token distribution like manual
+*    charge or refund or something like this
+* 3. Promise "honestly" to not spend team/advisers or any kind of other tokens. All
+*    limitations for all members should be in smart contract.
+* 4. Be unclear for banks. KYC compliance should be integrated to smart contract.
+*/
 contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowdsale {
 
   /***********************************************************************/
