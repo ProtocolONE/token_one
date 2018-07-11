@@ -1,9 +1,10 @@
 pragma solidity ^0.4.19;
 
-import "openzeppelin-solidity/contracts/crowdsale/distribution/FinalizableCrowdsale.sol";
-import "openzeppelin-solidity/contracts/crowdsale/distribution/RefundableCrowdsale.sol";
-import "openzeppelin-solidity/contracts/crowdsale/validation/CappedCrowdsale.sol";
-import "openzeppelin-solidity/contracts/crowdsale/validation/TimedCrowdsale.sol";
+import "./crowdsale/FinalizableCrowdsale.sol";
+import "./crowdsale/CappedCrowdsale.sol";
+import "./crowdsale/TimedCrowdsale.sol";
+import "./crowdsale/LockRefundVault.sol";
+
 import "./OneSmartToken.sol";
 
 /**
@@ -18,7 +19,7 @@ import "./OneSmartToken.sol";
 *    limitations for all members should be in smart contract.
 * 4. Be unclear for banks. KYC compliance should be integrated to smart contract.
 */
-contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowdsale {
+contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
 
   /***********************************************************************/
   /**                              Constants
@@ -29,6 +30,9 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
   
   // Minimal length of invoice id for fiat/BTC payments
   uint256 public constant MIN_INVOICE_LENGTH = 5;
+  
+  // Share amount in ETC for marketing purposes during campaign
+  uint256 public constant WALLET_MARKETING_SHARE = 10;
 
   
   /***********************************************************************/
@@ -45,12 +49,13 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
     address _investorOneTokenWallet;
     address _investorBonusOneTokenWallet;
     address _finderOneTokenWallet;
-    address _finderETCWallet;
+    uint256 _finderBonusWalletShare;
+    uint256 _weiMinAmount;
     uint256 _oneRate;
-    uint256 _investorBonusAndFinderWalletShare;
+    uint256 _oneRateTime;
     bool _kycPassed;
     uint256 _releaseTime;
-}
+  }
   
   /**
   * The structure to hold private round condition for token distribution and
@@ -74,6 +79,12 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
     _;
   }
   
+  modifier onlyAfterSale() {
+    //UNDONE
+    require(!isActive());
+    _;
+  }
+  
   /**
    * @dev Reverts if beneficiary is not whitelisted. Can be used when extending this contract.
    */
@@ -91,6 +102,7 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
   address public walletAdvisers; // 3% of the total number of ONE tokens will be allocated to professional fees and Bounties
   address public walletFounders; // 15% of the total number of ONE tokens will be allocated to Protocol One founders
   address public walletReserve; // 10% of the total number of ONE tokens will be allocated to Protocol One and as a reserve for the company to be used for future strategic plans for the created ecosystem
+  address public walletMarketing; // 10% of the total number of ERC for supporting ICO process.
   
   //Investors - used for ether presale and bonus token generation
   address[] public investorsMapKeys;
@@ -100,27 +112,22 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
   address[] public invoiceMapKeys;
   mapping(address => InvoiceDealConditions) public invoicesMap;
   
+  // The refund vault
+  LockRefundVault public refundVault;
+  
   /***********************************************************************/
   /**                              Events
   /***********************************************************************/
   
   event InvestorAdded(address indexed _grantee);
-  
   event InvestorUpdated(address indexed _grantee);
-  
   event InvestorDeleted(address indexed _grantee);
-  
   event InvestorKycUpdated(address indexed _grantee, bool _oldValue, bool _newValue);
-  
   event TokenPurchaseByInvestor(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
   
-  
   event InvoiceAdded(address indexed _grantee);
-  
   event InvoiceUpdated(address indexed _grantee);
-  
   event InvoiceDeleted(address indexed _grantee);
-  
   event InvoiceKycUpdated(address indexed _grantee, bool _oldValue, bool _newValue);
   
   /***********************************************************************/
@@ -130,26 +137,29 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
   constructor(
     uint256 _openingTime,
     uint256 _closingTime,
-    uint256 _rate,
     address _wallet,
     address _walletTeam,
     address _walletAdvisers,
     address _walletFounders,
     address _walletReserve,
+    address _walletMarketing,
     uint256 _cap,
     uint256 _goal,
-    OneSmartToken _token
+    OneSmartToken _oneToken,
+    LockRefundVault _refundVault
   )
     public
-    Crowdsale(_rate, _wallet, _token)
+    Crowdsale(_openingTime, _closingTime, EXCHANGE_RATE, _wallet, _token)
     CappedCrowdsale(_cap)
-    TimedCrowdsale(_openingTime, _closingTime)
-    RefundableCrowdsale(_goal)
   {
     require(_walletTeam != address(0));
     require(_walletAdvisers != address(0));
     require(_walletFounders != address(0));
     require(_walletReserve != address(0));
+    require(_walletMarketing != address(0));
+    
+    require(_oneToken != address(0));
+    require(_refundVault != address(0));
 
     require(_goal <= _cap);
   
@@ -157,10 +167,78 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
     walletAdvisers = _walletAdvisers;
     walletFounders = _walletFounders;
     walletReserve = _walletReserve;
+    walletMarketing = _walletMarketing;
     
-    token = _token;
+    token = _oneToken;
+    refundVault = _refundVault;
   }
- 
+  
+  
+  /***********************************************************************/
+  /**                   Crowdsale external interface
+  /***********************************************************************/
+  
+  /**
+   * @dev fallback function ***DO NOT OVERRIDE***
+   */
+  function () external payable {
+    buyTokens(msg.sender);
+  }
+  
+  /**
+   * @dev low level token purchase ***DO NOT OVERRIDE***
+   * @param _beneficiary Address performing the token purchase
+   */
+  function buyTokens(address _beneficiary) public payable isWhitelisted onlyWhileSale {
+    DealConditions investorDeal = investorsMap[_beneficiary];
+    require(investorDeal._investorETCIncomeWallet == _beneficiary);
+    require(investorDeal._weiMinAmount <= _weiAmount);
+    
+    uint256 weiAmount = msg.value;
+    _preValidatePurchase(_beneficiary, weiAmount);
+    
+    // get investor rate based on current day from ICO start and personal deal rate
+    uint256 investorRate = getInvestorRate(investorDeal._investorETCIncomeWallet);
+    
+    // calculate token amount to be created based on fixed rate
+    uint256 baseDealTokens = weiAmount.mul(rate);
+    
+    // calculate token amount to be created based on personal investor rate
+    uint256 investorDealTokens = weiAmount.mul(investorRate);
+    
+    // calculate bonus part in tokens
+    uint256 bonusTokens = investorDealTokens.sub(baseDealTokens);
+    if (bonusTokens > 0) {
+      uint256 finderBonus = bonusTokens.mul(investorDeal._finderBonusWalletShare).div(100);
+      uint256 investorBonus = bonusTokens.sub(finderBonus);
+      
+      if (finderBonus > 0) {
+        //TODO move all bonus tokens to investorDeal._finderOneTokenWallet
+      }
+      
+      if (investorBonus > 0) {
+        //TODO move all bonus tokens to investorDeal._investorBonusOneTokenWallet
+      }
+    }
+    
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
+    
+    _deliverTokens(address(refundVault), tokens);
+    refundVault.deposit.value(msg.value)(msg.sender, tokens);
+    
+    
+    emit TokenPurchase(
+      msg.sender,
+      address(refundVault),
+      weiAmount,
+      tokens
+    );
+    
+    _forwardFunds();
+    _postValidatePurchase(_beneficiary, weiAmount);
+  }
+  
   
   /***********************************************************************/
   /**                              Public Methods
@@ -172,11 +250,31 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
   function isActive() public view returns (bool) {
     return block.timestamp >= openingTime && block.timestamp <= closingTime;
   }
- 
-
+  
+  /**
+  * @return the rate in ONE per 1 ETH.
+  */
+  function getRate() public view returns (uint256) {
+    //UNDONE final rate table
+    if (now < (startTime.add(1 days))) {return 1000;}
+    if (now < (startTime.add(30 days))) {return 550;}
+    
+    return rate;
+  }
+  
+  function rejectInvestorDeal(address _beneficiary) public onlyOwner onlyAfterSale {
+    // TODO
+  }
+  
+  function rejectInvoiceDeal(address _beneficiary) public onlyOwner onlyAfterSale {
+    // TODO
+  }
+  
   /***********************************************************************/
   /**                              External Methods
   /***********************************************************************/
+  
+  //region Manage deal structures
   
   /**
   * @dev Adds/Updates address and token deal allocation for token investors.
@@ -192,8 +290,9 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
   * @param _investorOneTokenWallet address The address of the investor wallet for ONE tokens.
   * @param _investorBonusOneTokenWallet address The address of the investor wallet for bonus ONE tokens.
   * @param _finderOneTokenWallet address The address of the finder for ONE tokens.
-  * @param _finderETCWallet address The address of the finder for ONE tokens.
+  * @param _weiMinAmount minimum amount of ETH for payment.
   * @param _oneRate ONE to ETH rate for investor
+  * @param _oneRateTime timestamp when token rate should be used
   * @param _investorBonusAndFinderWalletShare amount of bonus ONE tokens distributed between _investorBonusOneTokenWallet and _finderOneTokenWallet
   * @param _kycPassed flag determining is investor passed KYC procedure for bank complience.
   * @param _releaseTime timestamp when token release is enabled
@@ -203,9 +302,10 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
     address _investorOneTokenWallet,
     address _investorBonusOneTokenWallet,
     address _finderOneTokenWallet,
-    address _finderETCWallet,
+    uint256 _weiMinAmount,
     uint256 _oneRate,
-    uint256 _investorBonusAndFinderWalletShare,
+    uint256 _oneRateTime,
+    uint256 _finderBonusWalletShare,
     bool _kycPassed,
     uint256 _releaseTime
   )
@@ -216,15 +316,23 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
     require(_investorETCIncomeWallet != address(0));
     require(_investorOneTokenWallet != address(0));
     require(_investorBonusOneTokenWallet != address(0));
-    require(_oneRate > 0);
     require(_releaseTime > 0);
+    require(_weiMinAmount > 0);
     
+    if (_oneRate > 0) {
+      require(_oneRateTime > now);
+    }
+    
+    if (_finderBonusWalletShare > 0) {
+      require(_finderBonusWalletShare <= 100);
+      require(_finderOneTokenWallet != address(0));
+    }
+   
     // Adding new key if not present:
     if (investorsMap[_investorETCIncomeWallet]._investorETCIncomeWallet == address(0)) {
       investorsMapKeys.push(_investorETCIncomeWallet);
       InvestorAdded(_investorETCIncomeWallet);
-    }
-    else {
+    } else {
       InvestorUpdated(_investorETCIncomeWallet);
     }
   
@@ -233,8 +341,10 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
     investorsMap[_investorETCIncomeWallet]._investorBonusOneTokenWallet = _investorBonusOneTokenWallet;
     investorsMap[_investorETCIncomeWallet]._finderOneTokenWallet = _finderOneTokenWallet;
     investorsMap[_investorETCIncomeWallet]._finderETCWallet = _finderETCWallet;
+    investorsMap[_investorETCIncomeWallet]._finderBonusWalletShare = _finderBonusWalletShare;
+    investorsMap[_investorETCIncomeWallet]._weiMinAmount = _weiMinAmount;
     investorsMap[_investorETCIncomeWallet]._oneRate = _oneRate;
-    investorsMap[_investorETCIncomeWallet]._investorBonusAndFinderWalletShare = _investorBonusAndFinderWalletShare;
+    investorsMap[_investorETCIncomeWallet]._oneRateTime = _oneRateTime;
     investorsMap[_investorETCIncomeWallet]._kycPassed = _kycPassed;
     investorsMap[_investorETCIncomeWallet]._releaseTime = _releaseTime;
   }
@@ -373,47 +483,29 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
     invoicesMap[_wallet]._kycPassed = _value;
   }
   
+  //endregion
   
-  // @dev Buy tokes with guarantee
-  function buyTokensWithGuarantee() public payable onlyWhileSale isWhitelisted {
-    //require(validPurchase());
-    
-    uint256 weiAmount = msg.value;
-    
-    // calculate token amount to be created
-    uint256 tokens = weiAmount.mul(getRate());
-    tokens = tokens.div(REFUND_DIVISION_RATE);
-    
-    // update state
-    weiRaised = weiRaised.add(weiAmount);
-    
-    token.issue(address(refundVault), tokens);
-    
-    refundVault.deposit.value(msg.value)(msg.sender, tokens);
-    
-    TokenPurchaseWithGuarantee(msg.sender, address(refundVault), weiAmount, tokens);
-  }
-
   
   /***********************************************************************/
   /**                         Internals
   /***********************************************************************/
   
-  
-  function makeBonusPaymanet() internal {
-    // process customer map
+  /**
+  * UNDONE docblock
+  */
+  function getInvestorRate(address _beneficiary) internal isWhitelisted view returns (uint256) {
+    uint256 oneRateTime =  investorsMap[_beneficiary]._oneRateTime;
+    uint256 oneRate = investorsMap[_beneficiary]._oneRate;
+    if (oneRateTime >= now && oneRate > 0) {
+      return oneRate;
+    }
+    
+    return getRate();
   }
-  
-  function deleteRestBonus() internal {
-    // TODO
-  }
-  
-  function rejectPayment(address _beneficiary) internal onlyOwner {
-    // TODO
-  }
-  
+
   /**
   * @dev Overrides delivery by minting tokens upon purchase.
+  *
   * @param _beneficiary Token purchaser
   * @param _tokenAmount Number of tokens to be minted
   */
@@ -425,11 +517,7 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
   function finalization() internal onlyOwner {
     super.finalization();
     
-    //TODO  bonuses for the pre crowdsale grantees:
-    for (uint256 i = 0; i < investorsMapKeys.length; i++) {
-    
-    }
-    
+    //TODO  bonuses for the pre crowdsale invoice based payments:
     for (uint256 i = 0; i < invoiceMapKeys.length; i++) {
     
     }
