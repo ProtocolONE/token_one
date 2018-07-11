@@ -474,7 +474,7 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
   * @param _wallet address The address of the investor wallet for ONE tokens.
   * @param _value flag determining is investor passed KYC procedure for bank complience.
   */
-  function updateInvestorKYC(address _wallet, bool _value) external onlyOwner {
+  function updateInvoiceKYC(address _wallet, bool _value) external onlyOwner {
     require(_wallet != address(0));
     require(invoicesMap[_wallet]._investorOneTokenWallet == _wallet);
     require(invoicesMap[_wallet]._kycPassed != _value);
