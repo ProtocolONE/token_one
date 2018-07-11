@@ -432,11 +432,11 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
       InvoiceUpdated(_investorOneTokenWallet);
     }
   
-    invoicesMap[_investorETCIncomeWallet]._investorOneTokenWallet = _investorOneTokenWallet;
-    invoicesMap[_investorETCIncomeWallet]._tokenAmount = _tokenAmount;
-    invoicesMap[_investorETCIncomeWallet]._invoiceId = _invoiceId;
-    invoicesMap[_investorETCIncomeWallet]._kycPassed = _kycPassed;
-    invoicesMap[_investorETCIncomeWallet]._releaseTime = _releaseTime;
+    invoicesMap[_investorOneTokenWallet]._investorOneTokenWallet = _investorOneTokenWallet;
+    invoicesMap[_investorOneTokenWallet]._tokenAmount = _tokenAmount;
+    invoicesMap[_investorOneTokenWallet]._invoiceId = _invoiceId;
+    invoicesMap[_investorOneTokenWallet]._kycPassed = _kycPassed;
+    invoicesMap[_investorOneTokenWallet]._releaseTime = _releaseTime;
   }
   
   /**
