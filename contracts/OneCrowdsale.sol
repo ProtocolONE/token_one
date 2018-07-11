@@ -1,12 +1,13 @@
 pragma solidity ^0.4.19;
 
 import "openzeppelin-solidity/contracts/crowdsale/distribution/FinalizableCrowdsale.sol";
+import "openzeppelin-solidity/contracts/crowdsale/distribution/RefundableCrowdsale.sol";
 import "openzeppelin-solidity/contracts/crowdsale/validation/CappedCrowdsale.sol";
 import "openzeppelin-solidity/contracts/crowdsale/validation/TimedCrowdsale.sol";
 import "./OneSmartToken.sol";
 
 
-contract OneCrowdsale is TimedCrowdsale, CappedCrowdsale, FinalizableCrowdsale {
+contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowdsale {
   
   //TODO Remove structure to plain mapping
   struct User {
@@ -46,17 +47,21 @@ contract OneCrowdsale is TimedCrowdsale, CappedCrowdsale, FinalizableCrowdsale {
     address _walletFounders,
     address _walletReserve,
     uint256 _cap,
+    uint256 _goal,
     OneSmartToken _token
   )
     public
     Crowdsale(_rate, _wallet, _token)
     CappedCrowdsale(_cap)
     TimedCrowdsale(_openingTime, _closingTime)
+    RefundableCrowdsale(_goal)
   {
     require(_walletTeam != address(0));
     require(_walletAdvisers != address(0));
     require(_walletFounders != address(0));
     require(_walletReserve != address(0));
+
+    require(_goal <= _cap);
   
     walletTeam = _walletTeam;
     walletAdvisers = _walletAdvisers;
@@ -155,7 +160,7 @@ contract OneCrowdsale is TimedCrowdsale, CappedCrowdsale, FinalizableCrowdsale {
   function updateKYC(address _beneficiary) internal onlyOwner {
     
   }
-  
+
   /**
   * @dev Overrides delivery by minting tokens upon purchase.
   * @param _beneficiary Token purchaser
