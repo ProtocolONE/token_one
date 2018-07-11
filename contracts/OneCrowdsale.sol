@@ -11,13 +11,14 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
   
   //TODO Remove structure to plain mapping
   struct User {
-    address _bonusPart;
-    address _bonusCommission;
+    address _bonusBeneficiary;
+    address _bonusCommissionBeneficiary;
     uint256 _bonusPercent;
     uint256 _tokensToTransfer;
     uint256 _poneTokensToTransfer;
     string _invoiceId;
     bool _kycFlag;
+    bool _isWhitelisted;
   }
   
   // wallets address for 41% of ONE allocation
@@ -26,14 +27,14 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
   address public walletFounders;
   address public walletReserve;
   
+  address[] public presaleBeneficiaryMapKeys;
   mapping(address => User) public presaleBeneficiary;
-  mapping(address => bool) public whitelist;
   
   /**
    * @dev Reverts if beneficiary is not whitelisted. Can be used when extending this contract.
    */
   modifier isWhitelisted(address _beneficiary) {
-    require(whitelist[_beneficiary]);
+    require(presaleBeneficiary[_beneficiary]._isWhitelisted);
     _;
   }
   
@@ -71,26 +72,10 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
     token = _token;
   }
   
-  /**
-   * @dev Adds single address to whitelist.
-   * @param _beneficiary Address to be added to the whitelist
-   */
-  function addToWhitelist(address _beneficiary) private onlyOwner {
-    whitelist[_beneficiary] = true;
-  }
-  
-  /**
-   * @dev Removes single address from whitelist.
-   * @param _beneficiary Address to be removed to the whitelist
-   */
-  function removeFromWhitelist(address _beneficiary) private onlyOwner {
-    whitelist[_beneficiary] = false;
-  }
-  
   function requestOnCryptoTransfer(
     address _beneficiary,
-    address _bonusPartBeneficiary,
-    address _bonusCommission,
+    address _bonusBeneficiary,
+    address _bonusCommissionBeneficiary,
     uint256 _bonusPercent,
     uint256 _tokensToTransfer,
     uint256 _poneTokensToTransfer,
@@ -103,21 +88,21 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
     require(_tokensToTransfer > 0);
     
     // TODO validation
-    addToWhitelist(_beneficiary);
-    presaleBeneficiary[_beneficiary] = User(
-      _bonusPartBeneficiary,
-      _bonusCommission,
-      _bonusPercent,
-      _tokensToTransfer,
-      _poneTokensToTransfer,
-      "",
-      _kycFlag
-    );
+    presaleBeneficiary[_beneficiary]._bonusBeneficiary = _bonusBeneficiary;
+    presaleBeneficiary[_beneficiary]._bonusCommissionBeneficiary = _bonusCommissionBeneficiary;
+    presaleBeneficiary[_beneficiary]._bonusPercent = _bonusPercent;
+    presaleBeneficiary[_beneficiary]._tokensToTransfer = _tokensToTransfer;
+    presaleBeneficiary[_beneficiary]._poneTokensToTransfer = _poneTokensToTransfer;
+    presaleBeneficiary[_beneficiary]._kycFlag = _kycFlag;
+    presaleBeneficiary[_beneficiary]._isWhitelisted = true;
+
+    presaleBeneficiaryMapKeys.push(_beneficiary);
   }
 
   function requestOnInvoiceTransfer(
     address _beneficiary,
-    address _bonusPart,
+    address _bonusBeneficiary,
+    address _bonusCommissionBeneficiary,
     uint256 _bonusPercent,
     uint256 _tokensToTransfer,
     uint256 _poneTokensToTransfer,
@@ -126,17 +111,19 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
   )
     public onlyOwner
   {
-    // TODO validation
-    addToWhitelist(_beneficiary);
-    presaleBeneficiary[_beneficiary] = User(
-      _bonusPart,
-      0,
-      _bonusPercent,
-      _tokensToTransfer,
-      _poneTokensToTransfer,
-      _invoiceId,
-      _kycFlag
-    );
+    require(_beneficiary != address(0));
+    require(_tokensToTransfer > 0);
+    
+    presaleBeneficiary[_beneficiary]._bonusBeneficiary = _bonusBeneficiary;
+    presaleBeneficiary[_beneficiary]._bonusCommissionBeneficiary = _bonusCommissionBeneficiary;
+    presaleBeneficiary[_beneficiary]._bonusPercent = _bonusPercent;
+    presaleBeneficiary[_beneficiary]._tokensToTransfer = _tokensToTransfer;
+    presaleBeneficiary[_beneficiary]._poneTokensToTransfer = _poneTokensToTransfer;
+    presaleBeneficiary[_beneficiary]._invoiceId = _invoiceId;
+    presaleBeneficiary[_beneficiary]._kycFlag = _kycFlag;
+    presaleBeneficiary[_beneficiary]._isWhitelisted = true;
+  
+    presaleBeneficiaryMapKeys.push(_beneficiary);
   }
   
   function makeBonusPaymanet() internal {
@@ -157,8 +144,13 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
     // Form list from map
   }
   
-  function updateKYC(address _beneficiary) internal onlyOwner {
-    
+  /**
+  * @dev Update token purchaser KYC state.
+  * @param _beneficiary Token purchaser
+  * @param _kycFlag Is token purchaser confirm they identity
+  */
+  function updateKYC(address _beneficiary, bool _kycFlag) internal onlyOwner {
+    presaleBeneficiary[_beneficiary]._kycFlag = _kycFlag;
   }
 
   /**
@@ -180,6 +172,9 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
     super.finalization();
     
     //TODO  bonuses for the pre crowdsale grantees:
+    for (uint256 i = 0; i < presaleBeneficiaryMapKeys.length; i++) {
+    
+    }
     
     // Adding 41% of the total token supply (59% were generated during the crowdsale)
     // using a simple rule of proportion
