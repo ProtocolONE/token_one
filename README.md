@@ -4,6 +4,15 @@
 
 Please see the [contracts/](contracts) directory.
 
+## Getting started 
+
+First install truffle and initialize your project with `npm install`.
+
+```sh
+npm install -g truffle
+npm install 
+```
+
 ## The Crowdsale Specification
 * ONE token is ERC-20 compliant.
 * Token allocation:
