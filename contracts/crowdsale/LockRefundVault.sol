@@ -1,7 +1,7 @@
 pragma solidity ^0.4.18;
 
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "openzeppelin-solidity/contracts/ownership/Claimable.sol";
+import "../math/SafeMath.sol";
+import "../ownership/Claimable.sol";
 import '../OneSmartToken.sol';
 
 
