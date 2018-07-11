@@ -112,6 +112,9 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
   
   event InvestorKycUpdated(address indexed _grantee, bool _oldValue, bool _newValue);
   
+  event TokenPurchaseByInvestor(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+  
+  
   event InvoiceAdded(address indexed _grantee);
   
   event InvoiceUpdated(address indexed _grantee);
@@ -157,7 +160,7 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
     
     token = _token;
   }
-  
+ 
   
   /***********************************************************************/
   /**                              Public Methods
@@ -246,7 +249,7 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
     require(investorsMap[_investorETCIncomeWallet]._investorETCIncomeWallet != address(0));
   
     //delete from the map:
-    delete investorsMap[_grantee];
+    delete investorsMap[_investorETCIncomeWallet];
   
     //delete from the array (keys):
     uint256 index;
@@ -337,7 +340,7 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
     require(invoiceMap[_investorOneTokenWallet]._investorOneTokenWallet != address(0));
   
     //delete from the map:
-    delete invoiceMap[_grantee];
+    delete invoiceMap[_investorOneTokenWallet];
   
     //delete from the array (keys):
     uint256 index;
@@ -370,6 +373,33 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
     invoicesMap[_wallet]._kycPassed = _value;
   }
   
+  
+  // @dev Buy tokes with guarantee
+  function buyTokensWithGuarantee() public payable onlyWhileSale isWhitelisted {
+    //require(validPurchase());
+    
+    uint256 weiAmount = msg.value;
+    
+    // calculate token amount to be created
+    uint256 tokens = weiAmount.mul(getRate());
+    tokens = tokens.div(REFUND_DIVISION_RATE);
+    
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
+    
+    token.issue(address(refundVault), tokens);
+    
+    refundVault.deposit.value(msg.value)(msg.sender, tokens);
+    
+    TokenPurchaseWithGuarantee(msg.sender, address(refundVault), weiAmount, tokens);
+  }
+
+  
+  /***********************************************************************/
+  /**                         Internals
+  /***********************************************************************/
+  
+  
   function makeBonusPaymanet() internal {
     // process customer map
   }
@@ -381,22 +411,17 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
   function rejectPayment(address _beneficiary) internal onlyOwner {
     // TODO
   }
-
+  
   /**
   * @dev Overrides delivery by minting tokens upon purchase.
   * @param _beneficiary Token purchaser
   * @param _tokenAmount Number of tokens to be minted
   */
-  function _deliverTokens(
-    address _beneficiary,
-    uint256 _tokenAmount
-  )
-  internal
-  {
+  function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
     require(MintableToken(token).mint(_beneficiary, _tokenAmount));
   }
-  
-  //@Override
+
+  //@Override Impl FinalizableCrowdsale
   function finalization() internal onlyOwner {
     super.finalization();
     
@@ -404,7 +429,7 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
     for (uint256 i = 0; i < investorsMapKeys.length; i++) {
     
     }
-  
+    
     for (uint256 i = 0; i < invoiceMapKeys.length; i++) {
     
     }
@@ -427,4 +452,3 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
     _deliverTokens(walletReserve, newTotalSupply.mul(10).div(100));
   }
 }
-
