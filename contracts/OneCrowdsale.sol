@@ -8,37 +8,112 @@ import "./OneSmartToken.sol";
 
 
 contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowdsale {
+
+  /***********************************************************************/
+  /**                              Constants
+  /***********************************************************************/
   
-  //TODO Remove structure to plain mapping
-  struct User {
-    address _bonusBeneficiary;
-    address _bonusCommissionBeneficiary;
-    uint256 _bonusPercent;
-    uint256 _tokensToTransfer;
-    uint256 _poneTokensToTransfer;
+  // ONE to ETH base rate
+  uint256 public constant EXCHANGE_RATE = 500;
+  
+  // Minimal length of invoice id for fiat/BTC payments
+  uint256 public constant MIN_INVOICE_LENGTH = 5;
+
+  
+  /***********************************************************************/
+  /**                              Structures
+  /***********************************************************************/
+  
+  /**
+  * The structure to hold private round condition for token distribution and
+  * refund.
+  * @see addUpdateDeal for details.
+  */
+  struct DealConditions {
+    address _investorETCIncomeWallet;
+    address _investorOneTokenWallet;
+    address _investorBonusOneTokenWallet;
+    address _finderOneTokenWallet;
+    address _finderETCWallet;
+    uint256 _oneRate;
+    uint256 _investorBonusAndFinderWalletShare;
+    bool _kycPassed;
+    uint256 _releaseTime;
+}
+  
+  /**
+  * The structure to hold private round condition for token distribution and
+  * refund based on invoice payments.
+  * @see addUpdateInvoiceDeal for details.
+  */
+  struct InvoiceDealConditions {
+    address _investorOneTokenWallet;
+    uint256 _tokenAmount;
     string _invoiceId;
-    bool _kycFlag;
-    bool _isWhitelisted;
+    bool _kycPassed;
+    uint256 _releaseTime;
   }
   
-  // wallets address for 41% of ONE allocation
-  address public walletTeam;
-  address public walletAdvisers;
-  address public walletFounders;
-  address public walletReserve;
+  /***********************************************************************/
+  /**                              Modifiers
+  /***********************************************************************/
   
-  address[] public presaleBeneficiaryMapKeys;
-  mapping(address => User) public presaleBeneficiary;
+  modifier onlyWhileSale() {
+    require(isActive());
+    _;
+  }
   
   /**
    * @dev Reverts if beneficiary is not whitelisted. Can be used when extending this contract.
    */
   modifier isWhitelisted(address _beneficiary) {
-    require(presaleBeneficiary[_beneficiary]._isWhitelisted);
+    require(investorsMap[_beneficiary]._investorETCIncomeWallet != address(0));
     _;
   }
   
-  function OneCrowdsale(
+  /***********************************************************************/
+  /**                              Members
+  /***********************************************************************/
+
+  // wallets address for 41% of ONE allocation
+  address public walletTeam; // 12% of the total number of ONE tokens will be allocated to the team and SDK developers
+  address public walletAdvisers; // 3% of the total number of ONE tokens will be allocated to professional fees and Bounties
+  address public walletFounders; // 15% of the total number of ONE tokens will be allocated to Protocol One founders
+  address public walletReserve; // 10% of the total number of ONE tokens will be allocated to Protocol One and as a reserve for the company to be used for future strategic plans for the created ecosystem
+  
+  //Investors - used for ether presale and bonus token generation
+  address[] public investorsMapKeys;
+  mapping(address => DealConditions) public investorsMap;
+  
+  //Invoice -used for non-ether presale token generation
+  address[] public invoiceMapKeys;
+  mapping(address => InvoiceDealConditions) public invoicesMap;
+  
+  /***********************************************************************/
+  /**                              Events
+  /***********************************************************************/
+  
+  event InvestorAdded(address indexed _grantee);
+  
+  event InvestorUpdated(address indexed _grantee);
+  
+  event InvestorDeleted(address indexed _grantee);
+  
+  event InvestorKycUpdated(address indexed _grantee, bool _oldValue, bool _newValue);
+  
+  event InvoiceAdded(address indexed _grantee);
+  
+  event InvoiceUpdated(address indexed _grantee);
+  
+  event InvoiceDeleted(address indexed _grantee);
+  
+  event InvoiceKycUpdated(address indexed _grantee, bool _oldValue, bool _newValue);
+  
+  /***********************************************************************/
+  /**                              Constructor
+  /***********************************************************************/
+  
+  constructor(
     uint256 _openingTime,
     uint256 _closingTime,
     uint256 _rate,
@@ -72,58 +147,216 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
     token = _token;
   }
   
-  function requestOnCryptoTransfer(
-    address _beneficiary,
-    address _bonusBeneficiary,
-    address _bonusCommissionBeneficiary,
-    uint256 _bonusPercent,
-    uint256 _tokensToTransfer,
-    uint256 _poneTokensToTransfer,
-    bool _kycFlag
-  )
-    public
-    onlyOwner
-  {
-    require(_beneficiary != address(0));
-    require(_tokensToTransfer > 0);
-    
-    // TODO validation
-    presaleBeneficiary[_beneficiary]._bonusBeneficiary = _bonusBeneficiary;
-    presaleBeneficiary[_beneficiary]._bonusCommissionBeneficiary = _bonusCommissionBeneficiary;
-    presaleBeneficiary[_beneficiary]._bonusPercent = _bonusPercent;
-    presaleBeneficiary[_beneficiary]._tokensToTransfer = _tokensToTransfer;
-    presaleBeneficiary[_beneficiary]._poneTokensToTransfer = _poneTokensToTransfer;
-    presaleBeneficiary[_beneficiary]._kycFlag = _kycFlag;
-    presaleBeneficiary[_beneficiary]._isWhitelisted = true;
-
-    presaleBeneficiaryMapKeys.push(_beneficiary);
-  }
-
-  function requestOnInvoiceTransfer(
-    address _beneficiary,
-    address _bonusBeneficiary,
-    address _bonusCommissionBeneficiary,
-    uint256 _bonusPercent,
-    uint256 _tokensToTransfer,
-    uint256 _poneTokensToTransfer,
-    string _invoiceId,
-    bool _kycFlag
-  )
-    public onlyOwner
-  {
-    require(_beneficiary != address(0));
-    require(_tokensToTransfer > 0);
-    
-    presaleBeneficiary[_beneficiary]._bonusBeneficiary = _bonusBeneficiary;
-    presaleBeneficiary[_beneficiary]._bonusCommissionBeneficiary = _bonusCommissionBeneficiary;
-    presaleBeneficiary[_beneficiary]._bonusPercent = _bonusPercent;
-    presaleBeneficiary[_beneficiary]._tokensToTransfer = _tokensToTransfer;
-    presaleBeneficiary[_beneficiary]._poneTokensToTransfer = _poneTokensToTransfer;
-    presaleBeneficiary[_beneficiary]._invoiceId = _invoiceId;
-    presaleBeneficiary[_beneficiary]._kycFlag = _kycFlag;
-    presaleBeneficiary[_beneficiary]._isWhitelisted = true;
   
-    presaleBeneficiaryMapKeys.push(_beneficiary);
+  /***********************************************************************/
+  /**                              Public Methods
+  /***********************************************************************/
+  
+  /**
+  * @return true if the crowdsale is active, hence users can buy tokens
+  */
+  function isActive() public view returns (bool) {
+    return block.timestamp >= openingTime && block.timestamp <= closingTime;
+  }
+ 
+
+  /***********************************************************************/
+  /**                              External Methods
+  /***********************************************************************/
+  
+  /**
+  * @dev Adds/Updates address and token deal allocation for token investors.
+  * All tokens during pre-sale are allocated to pre-sale, buyers.
+  *
+  * NOTE: According to EU/US laws we can`t handle and use any fees from investors
+  * without passed KYC (Know Your Customer) procedure to ensure verification processes
+  * in order to reduce fraud, money laundering and scams. In order to do this, it is
+  * important to authenticate money trail from start to end. That’s when KYC comes
+  * into practice.
+  *
+  * @param _investorETCIncomeWallet address The address of the investor wallet for ETC payments.
+  * @param _investorOneTokenWallet address The address of the investor wallet for ONE tokens.
+  * @param _investorBonusOneTokenWallet address The address of the investor wallet for bonus ONE tokens.
+  * @param _finderOneTokenWallet address The address of the finder for ONE tokens.
+  * @param _finderETCWallet address The address of the finder for ONE tokens.
+  * @param _oneRate ONE to ETH rate for investor
+  * @param _investorBonusAndFinderWalletShare amount of bonus ONE tokens distributed between _investorBonusOneTokenWallet and _finderOneTokenWallet
+  * @param _kycPassed flag determining is investor passed KYC procedure for bank complience.
+  * @param _releaseTime timestamp when token release is enabled
+  */
+  function addUpdateDeal(
+    address _investorETCIncomeWallet,
+    address _investorOneTokenWallet,
+    address _investorBonusOneTokenWallet,
+    address _finderOneTokenWallet,
+    address _finderETCWallet,
+    uint256 _oneRate,
+    uint256 _investorBonusAndFinderWalletShare,
+    bool _kycPassed,
+    uint256 _releaseTime
+  )
+    external
+    onlyOwner
+    onlyWhileSale
+  {
+    require(_investorETCIncomeWallet != address(0));
+    require(_investorOneTokenWallet != address(0));
+    require(_investorBonusOneTokenWallet != address(0));
+    require(_oneRate > 0);
+    require(_releaseTime > 0);
+    
+    // Adding new key if not present:
+    if (investorsMap[_investorETCIncomeWallet]._investorETCIncomeWallet == address(0)) {
+      investorsMapKeys.push(_investorETCIncomeWallet);
+      InvestorAdded(_investorETCIncomeWallet);
+    }
+    else {
+      InvestorUpdated(_investorETCIncomeWallet);
+    }
+  
+    investorsMap[_investorETCIncomeWallet]._investorETCIncomeWallet = _investorETCIncomeWallet;
+    investorsMap[_investorETCIncomeWallet]._investorOneTokenWallet = _investorOneTokenWallet;
+    investorsMap[_investorETCIncomeWallet]._investorBonusOneTokenWallet = _investorBonusOneTokenWallet;
+    investorsMap[_investorETCIncomeWallet]._finderOneTokenWallet = _finderOneTokenWallet;
+    investorsMap[_investorETCIncomeWallet]._finderETCWallet = _finderETCWallet;
+    investorsMap[_investorETCIncomeWallet]._oneRate = _oneRate;
+    investorsMap[_investorETCIncomeWallet]._investorBonusAndFinderWalletShare = _investorBonusAndFinderWalletShare;
+    investorsMap[_investorETCIncomeWallet]._kycPassed = _kycPassed;
+    investorsMap[_investorETCIncomeWallet]._releaseTime = _releaseTime;
+  }
+  
+  /**
+  * @dev Deletes entries from the deal list.
+  *
+  * @param _investorETCIncomeWallet address The address of the investor wallet for ETC payments.
+  */
+  function deleteDeal(address _investorETCIncomeWallet) external onlyOwner onlyWhileSale {
+    require(_investorETCIncomeWallet != address(0));
+    require(investorsMap[_investorETCIncomeWallet]._investorETCIncomeWallet != address(0));
+  
+    //delete from the map:
+    delete investorsMap[_grantee];
+  
+    //delete from the array (keys):
+    uint256 index;
+    for (uint256 i = 0; i < investorsMapKeys.length; i++) {
+      if (investorsMapKeys[i] == _investorETCIncomeWallet) {
+        index = i;
+        break;
+      }
+    }
+  
+    investorsMapKeys[index] = investorsMapKeys[investorsMapKeys.length - 1];
+    delete investorsMapKeys[investorsMapKeys.length - 1];
+    investorsMapKeys.length--;
+  
+    InvestorDeleted(_investorETCIncomeWallet);
+  }
+  
+  /**
+  * @dev Update KYC flag for deal.
+  *
+  * @param _wallet address The address of the investor wallet for ETC payments.
+  * @param _value flag determining is investor passed KYC procedure for bank complience.
+  */
+  function updateInvestorKYC(address _wallet, bool _value) external onlyOwner {
+    require(_wallet != address(0));
+    require(investorsMap[_wallet]._investorETCIncomeWallet == _wallet);
+    require(investorsMap[_wallet]._kycPassed != _value);
+  
+    InvestorKycUpdated(_wallet, investorsMap[_wallet]._kycPassed, _value);
+    investorsMap[_wallet]._kycPassed = _value;
+  }
+  
+  /**
+  * @dev Adds/Updates address and token allocation for token investors with
+  * BTC/fiat based payments.
+  *
+  * NOTE: According to EU/US laws we can`t handle and use any fees from investors
+  * without passed KYC (Know Your Customer) procedure to ensure verification processes
+  * in order to reduce fraud, money laundering and scams. In order to do this, it is
+  * important to authenticate money trail from start to end. That’s when KYC comes
+  * into practice.
+  *
+  * @param _investorOneTokenWallet address The address of the investor wallet for ONE tokens.
+  * @param _tokenAmount ONE token amount based on invoice income.
+  * @param _invoiceId fiat payment invoice id or BTC transaction id.
+  * @param _kycPassed flag determining is investor passed KYC procedure for bank complience.
+  * @param _releaseTime timestamp when token release is enabled
+  */
+  function addUpdateInvoiceDeal(
+    address _investorOneTokenWallet,
+    uint256 _tokenAmount,
+    string _invoiceId,
+    bool _kycPassed,
+    uint256 _releaseTime
+  )
+    external
+    onlyOwner
+    onlyWhileSale
+  {
+    require(_investorOneTokenWallet != address(0));
+    require(bytes(_invoiceId).length > MIN_INVOICE_LENGTH);
+    require(_tokenAmount > 0);
+    require(_releaseTime > 0);
+  
+    // Adding new key if not present:
+    if (invoicesMap[_investorOneTokenWallet]._investorOneTokenWallet == address(0)) {
+      invoiceMapKeys.push(_investorOneTokenWallet);
+      InvoiceAdded(_investorOneTokenWallet);
+    }
+    else {
+      InvoiceUpdated(_investorOneTokenWallet);
+    }
+  
+    invoicesMap[_investorETCIncomeWallet]._investorOneTokenWallet = _investorOneTokenWallet;
+    invoicesMap[_investorETCIncomeWallet]._tokenAmount = _tokenAmount;
+    invoicesMap[_investorETCIncomeWallet]._invoiceId = _invoiceId;
+    invoicesMap[_investorETCIncomeWallet]._kycPassed = _kycPassed;
+    invoicesMap[_investorETCIncomeWallet]._releaseTime = _releaseTime;
+  }
+  
+  /**
+  * @dev Deletes entries from the invoice list.
+  *
+  * @param _investorOneTokenWallet address The address of the investor wallet for ONE tokens.
+  */
+  function deleteInvoiceDeal(address _investorOneTokenWallet) external onlyOwner onlyWhileSale {
+    require(_investorOneTokenWallet != address(0));
+    require(invoiceMap[_investorOneTokenWallet]._investorOneTokenWallet != address(0));
+  
+    //delete from the map:
+    delete invoiceMap[_grantee];
+  
+    //delete from the array (keys):
+    uint256 index;
+    for (uint256 i = 0; i < invoiceMapKeys.length; i++) {
+      if (investorsMapKeys[i] == _investorOneTokenWallet) {
+        index = i;
+        break;
+      }
+    }
+  
+    invoiceMapKeys[index] = invoiceMapKeys[invoiceMapKeys.length - 1];
+    delete invoiceMapKeys[invoiceMapKeys.length - 1];
+    invoiceMapKeys.length--;
+  
+    InvoiceDeleted(_investorOneTokenWallet);
+  }
+  
+  /**
+  * @dev Update KYC flag for invoice based deal.
+  *
+  * @param _wallet address The address of the investor wallet for ONE tokens.
+  * @param _value flag determining is investor passed KYC procedure for bank complience.
+  */
+  function updateInvestorKYC(address _wallet, bool _value) external onlyOwner {
+    require(_wallet != address(0));
+    require(invoicesMap[_wallet]._investorOneTokenWallet == _wallet);
+    require(invoicesMap[_wallet]._kycPassed != _value);
+  
+    InvoiceKycUpdated(_wallet, invoicesMap[_wallet]._kycPassed, _value);
+    invoicesMap[_wallet]._kycPassed = _value;
   }
   
   function makeBonusPaymanet() internal {
@@ -136,21 +369,6 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
   
   function rejectPayment(address _beneficiary) internal onlyOwner {
     // TODO
-  }
-  
-  // Add return list
-  function getListOfNonKyc() internal onlyOwner {
-    // TODO
-    // Form list from map
-  }
-  
-  /**
-  * @dev Update token purchaser KYC state.
-  * @param _beneficiary Token purchaser
-  * @param _kycFlag Is token purchaser confirm they identity
-  */
-  function updateKYC(address _beneficiary, bool _kycFlag) internal onlyOwner {
-    presaleBeneficiary[_beneficiary]._kycFlag = _kycFlag;
   }
 
   /**
@@ -172,7 +390,11 @@ contract OneCrowdsale is RefundableCrowdsale, CappedCrowdsale, FinalizableCrowds
     super.finalization();
     
     //TODO  bonuses for the pre crowdsale grantees:
-    for (uint256 i = 0; i < presaleBeneficiaryMapKeys.length; i++) {
+    for (uint256 i = 0; i < investorsMapKeys.length; i++) {
+    
+    }
+  
+    for (uint256 i = 0; i < invoiceMapKeys.length; i++) {
     
     }
     
