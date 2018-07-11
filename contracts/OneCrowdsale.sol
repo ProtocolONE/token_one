@@ -2,7 +2,6 @@ pragma solidity ^0.4.19;
 
 import "./crowdsale/FinalizableCrowdsale.sol";
 import "./crowdsale/CappedCrowdsale.sol";
-import "./crowdsale/TimedCrowdsale.sol";
 import "./crowdsale/LockRefundVault.sol";
 
 import "./OneSmartToken.sol";
@@ -496,6 +495,7 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
   function getInvestorRate(address _beneficiary) internal isWhitelisted view returns (uint256) {
     uint256 oneRateTime =  investorsMap[_beneficiary]._oneRateTime;
     uint256 oneRate = investorsMap[_beneficiary]._oneRate;
+    
     if (oneRateTime >= now && oneRate > 0) {
       return oneRate;
     }
