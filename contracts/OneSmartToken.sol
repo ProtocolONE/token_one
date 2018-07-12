@@ -42,7 +42,7 @@ contract OneSmartToken is MintableToken {
   
   function transferFrom(address from, address to, uint256 value) public returns (bool) {
     require(allowTransfers);
-    require(amount > 0);
+    require(value > 0);
     
     return super.transferFrom(from, to, value);
   }
