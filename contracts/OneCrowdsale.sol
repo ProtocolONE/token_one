@@ -1,7 +1,7 @@
 pragma solidity ^0.4.19;
 
+import "./math/SafeMath.sol";
 import "./crowdsale/FinalizableCrowdsale.sol";
-import "./crowdsale/CappedCrowdsale.sol";
 import "./crowdsale/LockRefundVault.sol";
 
 import "./OneSmartToken.sol";
@@ -18,8 +18,10 @@ import "./OneSmartToken.sol";
 *    limitations for all members should be in smart contract.
 * 4. Be unclear for banks. KYC compliance should be integrated to smart contract.
 */
-contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
-
+contract OneCrowdsale is FinalizableCrowdsale {
+  using SafeMath for uint256;
+  
+  OneSmartToken public ONE = new OneSmartToken(this);
   /***********************************************************************/
   /**                              Constants
   /***********************************************************************/
@@ -32,7 +34,6 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
   
   // Share amount in ETC for marketing purposes during campaign
   uint256 public constant WALLET_MARKETING_SHARE = 10;
-
   
   /***********************************************************************/
   /**                              Structures
@@ -43,17 +44,15 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
   * refund.
   * @see addUpdateDeal for details.
   */
-  struct DealConditions {
-    address _investorETCIncomeWallet;
-    address _investorOneTokenWallet;
-    address _investorBonusOneTokenWallet;
-    address _finderOneTokenWallet;
-    uint256 _finderBonusWalletShare;
-    uint256 _weiMinAmount;
-    uint256 _oneRate;
-    uint256 _oneRateTime;
-    bool _kycPassed;
-    uint256 _releaseTime;
+  struct PreSaleConditions {
+    address incomeWallet;
+    address investorWallet;
+    address finderWallet;
+    uint256 weiMinAmount;
+    uint256 bonusFinderShare;
+    uint256 bonusRate;
+    uint256 bonusRateTime;
+    uint256 releaseTime;
   }
   
   /**
@@ -61,58 +60,65 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
   * refund based on invoice payments.
   * @see addUpdateInvoiceDeal for details.
   */
-  struct InvoiceDealConditions {
-    address _investorOneTokenWallet;
-    uint256 _tokenAmount;
-    string _invoiceId;
-    bool _kycPassed;
-    uint256 _releaseTime;
+  struct InvestorConditions {
+    address investorWallet;
+    uint256 tokenAmount;
+    string invoiceId;
+    uint256 releaseTime;
   }
   
+  struct DealDeposit{
+    address investorWallet;
+    address bonusWallet;
+    uint256 depositedETH;
+    uint256 depositedTokens;
+    uint256 depositedBonusTokens;
+    uint256 releaseTime;
+  }
+ 
+  /***********************************************************************/
+  /**                              Members
+  /***********************************************************************/
+  
+  uint256 constant teamPart = 12; // 12% of the total supply for the team and SDK developers
+  uint256 constant advisersPart = 3; // 3% of the total supply for professional fees and Bounties
+  uint256 constant foundersPart = 15; // 15% of the total supply for Protocol One founders
+  uint256 constant reservePart = 10; // 10% of the total supply for future strategic plans for the created ecosystem
+  uint256 constant icoPart = 59; // 59% of total supply for public and private offers
+
+// wallets address for 41% of ONE allocation
+  address public walletTeam; //
+  address public walletAdvisers; //
+  address public walletFounders; //
+  address public walletReserve; //
+  
+  //Investors - used for ether presale and bonus token generation
+  address[] public investorsMapKeys;
+  mapping(address => PreSaleConditions) public investorsMap;
+  
+  //Invoice -used for non-ether presale token generation
+  address[] public invoiceMapKeys;
+  mapping(address => InvestorConditions) public invoicesMap;
+  
+  mapping(address => bool) public kykPassed;
+  mapping(address => DealDeposit) public depositMap;
+
   /***********************************************************************/
   /**                              Modifiers
   /***********************************************************************/
   
-  modifier onlyWhileSale() {
-    require(isActive());
-    _;
-  }
-  
-  modifier onlyAfterSale() {
-    //UNDONE
-    require(!isActive());
+  modifier onlyKYCPassed() {
+    require(kykPassed[msg.sender]);
     _;
   }
   
   /**
    * @dev Reverts if beneficiary is not whitelisted. Can be used when extending this contract.
    */
-  modifier isWhitelisted(address _beneficiary) {
-    require(investorsMap[_beneficiary]._investorETCIncomeWallet != address(0));
+  modifier onlyWhitelisted(address _beneficiary) {
+    require(investorsMap[_beneficiary].incomeWallet == _beneficiary);
     _;
   }
-  
-  /***********************************************************************/
-  /**                              Members
-  /***********************************************************************/
-
-  // wallets address for 41% of ONE allocation
-  address public walletTeam; // 12% of the total number of ONE tokens will be allocated to the team and SDK developers
-  address public walletAdvisers; // 3% of the total number of ONE tokens will be allocated to professional fees and Bounties
-  address public walletFounders; // 15% of the total number of ONE tokens will be allocated to Protocol One founders
-  address public walletReserve; // 10% of the total number of ONE tokens will be allocated to Protocol One and as a reserve for the company to be used for future strategic plans for the created ecosystem
-  address public walletMarketing; // 10% of the total number of ERC for supporting ICO process.
-  
-  //Investors - used for ether presale and bonus token generation
-  address[] public investorsMapKeys;
-  mapping(address => DealConditions) public investorsMap;
-  
-  //Invoice -used for non-ether presale token generation
-  address[] public invoiceMapKeys;
-  mapping(address => InvoiceDealConditions) public invoicesMap;
-  
-  // The refund vault
-  LockRefundVault public refundVault;
   
   /***********************************************************************/
   /**                              Events
@@ -122,7 +128,6 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
   event InvestorUpdated(address indexed _grantee);
   event InvestorDeleted(address indexed _grantee);
   event InvestorKycUpdated(address indexed _grantee, bool _oldValue, bool _newValue);
-  event TokenPurchaseByInvestor(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
   
   event InvoiceAdded(address indexed _grantee);
   event InvoiceUpdated(address indexed _grantee);
@@ -133,48 +138,36 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
   /**                              Constructor
   /***********************************************************************/
   
+  /**
+  * @param _cap Max amount of wei to be contributed
+  */
   constructor(
-    uint256 _openingTime,
-    uint256 _closingTime,
     address _wallet,
     address _walletTeam,
     address _walletAdvisers,
     address _walletFounders,
     address _walletReserve,
-    address _walletMarketing,
-    uint256 _cap,
-    uint256 _goal,
-    OneSmartToken _oneToken,
-    LockRefundVault _refundVault
+    uint256 _openingTime,
+    uint256 _closingTime,
+    uint256 _softCap,
+    uint256 _hardCap
   )
     public
-    Crowdsale(_openingTime, _closingTime, EXCHANGE_RATE, _wallet, _oneToken)
-    CappedCrowdsale(_cap)
+    Crowdsale(_openingTime, _closingTime, EXCHANGE_RATE, _softCap, _hardCap, _wallet)
   {
     require(_walletTeam != address(0));
     require(_walletAdvisers != address(0));
     require(_walletFounders != address(0));
     require(_walletReserve != address(0));
-    require(_walletMarketing != address(0));
     
-    require(_oneToken != address(0));
-    require(_refundVault != address(0));
-
-    require(_goal <= _cap);
-  
     walletTeam = _walletTeam;
     walletAdvisers = _walletAdvisers;
     walletFounders = _walletFounders;
     walletReserve = _walletReserve;
-    walletMarketing = _walletMarketing;
-    
-    token = _oneToken;
-    refundVault = _refundVault;
   }
   
-  
   /***********************************************************************/
-  /**                   Crowdsale external interface
+  /**                    Public Methods
   /***********************************************************************/
   
   /**
@@ -185,57 +178,48 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
   }
   
   /**
-   * @dev low level token purchase ***DO NOT OVERRIDE***
    * @param _beneficiary Address performing the token purchase
    */
-  function buyTokens(address _beneficiary) public payable isWhitelisted onlyWhileSale {
-    DealConditions investorDeal = investorsMap[_beneficiary];
-    require(investorDeal._investorETCIncomeWallet == _beneficiary);
-    require(investorDeal._weiMinAmount <= _weiAmount);
-    
+  function buyTokens(address _beneficiary) public payable onlyWhitelisted onlyWhileOpen hardCapNotReached {
+    PreSaleConditions investorDeal = investorsMap[_beneficiary];
+    require(investorDeal.weiMinAmount <= _weiAmount);
+  
     uint256 weiAmount = msg.value;
-    _preValidatePurchase(_beneficiary, weiAmount);
-    
-    // get investor rate based on current day from ICO start and personal deal rate
-    uint256 investorRate = getInvestorRate(investorDeal._investorETCIncomeWallet);
     
     // calculate token amount to be created based on fixed rate
     uint256 baseDealTokens = weiAmount.mul(rate);
+  
+    depositMap[_beneficiary].investorWallet = investorDeal.investorWallet;
+    depositMap[_beneficiary].bonusWallet = investorDeal.finderWallet;
+    depositMap[_beneficiary].depositedETH = weiAmount;
+    depositMap[_beneficiary].releaseTime = investorDeal.releaseTime;
     
-    // calculate token amount to be created based on personal investor rate
-    uint256 investorDealTokens = weiAmount.mul(investorRate);
+    // get investor bonus rate based on current day from ICO start and personal deal rate
+    uint256 bonusRate = getBonusRate(investorDeal.incomeWallet);
+    uint256 bonusTokens = baseDealTokens.mul(bonusRate).div(100);
     
     // calculate bonus part in tokens
-    uint256 bonusTokens = investorDealTokens.sub(baseDealTokens);
     if (bonusTokens > 0) {
-      uint256 finderBonus = bonusTokens.mul(investorDeal._finderBonusWalletShare).div(100);
+      uint256 finderBonus = bonusTokens.mul(investorDeal.bonusFinderShare).div(100);
       uint256 investorBonus = bonusTokens.sub(finderBonus);
+  
+      if (investorBonus > 0) {
+        baseDealTokens.add(investorBonus);
+      }
       
       if (finderBonus > 0) {
-        //TODO move all bonus tokens to investorDeal._finderOneTokenWallet
-      }
-      
-      if (investorBonus > 0) {
-        //TODO move all bonus tokens to investorDeal._investorBonusOneTokenWallet
+        depositMap[_beneficiary].depositedBonusTokens.add(finderBonus);
       }
     }
+    depositMap[_beneficiary].depositedTokens = baseDealTokens;
     
     // update state
     weiRaised = weiRaised.add(weiAmount);
     
-    _deliverTokens(address(refundVault), tokens);
-    refundVault.deposit.value(msg.value)(msg.sender, tokens);
+    uint256 totalTokens = baseDealTokens.add(bonusTokens);
     
-    
-    emit TokenPurchase(
-      msg.sender,
-      address(refundVault),
-      weiAmount,
-      tokens
-    );
-    
-    _forwardFunds();
-    _postValidatePurchase(_beneficiary, weiAmount);
+    ONE.mint(wallet, totalTokens); //UNDONE
+    forwardFunds();
   }
   
   
@@ -243,11 +227,41 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
   /**                              Public Methods
   /***********************************************************************/
   
-  /**
-  * @return true if the crowdsale is active, hence users can buy tokens
-  */
-  function isActive() public view returns (bool) {
-    return block.timestamp >= openingTime && block.timestamp <= closingTime;
+  function lockTokens() public onlyOwner {
+    ONE.lock();
+  }
+  
+  function unlockTokens() public onlyOwner {
+    ONE.unlock();
+  }
+  
+  function claimTokens() public onlyKYCPassed {
+    address investor = msg.sender;
+  
+    require(depositMap[investor].releaseTime > now);
+    require(depositMap[investor].depositedTokens > 0);
+  
+    uint256 depositedToken = depositMap[investor].depositedTokens;
+    uint256 investorWallet = depositMap[investor].investorWallet;
+    
+    depositMap[investor].depositedTokens = 0;
+    ONE.transfer(investorWallet, depositedToken);
+  
+    uint256 depositedBonusTokens = depositMap[investor].depositedBonusTokens;
+    if (depositedBonusTokens > 0) {
+      uint256 bonusWallet = depositMap[investor].bonusWallet;
+      depositMap[investor].depositedBonusTokens = 0;
+  
+      ONE.transfer(bonusWallet, depositedBonusTokens);
+    }
+    
+  
+    /*
+    investorsMapKeys[index] = investorsMapKeys[investorsMapKeys.length - 1];
+    delete investorsMapKeys[investorsMapKeys.length - 1];
+    investorsMapKeys.length--;
+    */
+    //wallet.transfer(depositedETHValue);
   }
   
   /**
@@ -261,19 +275,21 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
     return rate;
   }
   
-  function rejectInvestorDeal(address _beneficiary) public onlyOwner onlyAfterSale {
-    // TODO
-  }
-  
-  function rejectInvoiceDeal(address _beneficiary) public onlyOwner onlyAfterSale {
-    // TODO
+  function getBonusRate(address _beneficiary) internal onlyWhitelisted view returns (uint256) {
+    uint256 bonusRateTime =  investorsMap[_beneficiary].bonusRateTime;
+    uint256 bonusRate = investorsMap[_beneficiary].bonusRate;
+    
+    if (bonusRateTime >= now && bonusRate > 0) {
+      return bonusRate;
+    }
+    
+    return 0;
   }
   
   /***********************************************************************/
   /**                              External Methods
   /***********************************************************************/
   
-  //region Manage deal structures
   
   /**
   * @dev Adds/Updates address and token deal allocation for token investors.
@@ -285,67 +301,63 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
   * important to authenticate money trail from start to end. That’s when KYC comes
   * into practice.
   *
-  * @param _investorETCIncomeWallet address The address of the investor wallet for ETC payments.
-  * @param _investorOneTokenWallet address The address of the investor wallet for ONE tokens.
-  * @param _investorBonusOneTokenWallet address The address of the investor wallet for bonus ONE tokens.
-  * @param _finderOneTokenWallet address The address of the finder for ONE tokens.
+  * @param _incomeWallet address The address of the investor wallet for ETC payments.
+  * @param _investorWallet address The address of the investor wallet for ONE tokens.
+  * @param _bonusWallet address The address of the finder for ONE tokens.
   * @param _weiMinAmount minimum amount of ETH for payment.
-  * @param _oneRate ONE to ETH rate for investor
-  * @param _oneRateTime timestamp when token rate should be used
-  * @param _investorBonusAndFinderWalletShare amount of bonus ONE tokens distributed between _investorBonusOneTokenWallet and _finderOneTokenWallet
+  * @param _bonusRate ONE to ETH rate for investor
+  * @param _bonusRateTime timestamp when token rate should be used
+  * @param _bonusFinderShare amount of bonus ONE tokens distributed between _investorWallet and _bonusWallet
   * @param _kycPassed flag determining is investor passed KYC procedure for bank complience.
   * @param _releaseTime timestamp when token release is enabled
   */
   function addUpdateDeal(
-    address _investorETCIncomeWallet,
-    address _investorOneTokenWallet,
-    address _investorBonusOneTokenWallet,
-    address _finderOneTokenWallet,
+    address _incomeWallet,
+    address _investorWallet,
+    address _bonusWallet,
     uint256 _weiMinAmount,
-    uint256 _oneRate,
-    uint256 _oneRateTime,
-    uint256 _finderBonusWalletShare,
+    uint256 _bonusRate,
+    uint256 _bonusRateTime,
+    uint256 _bonusFinderShare,
     bool _kycPassed,
     uint256 _releaseTime
   )
     external
     onlyOwner
-    onlyWhileSale
+    onlyWhileOpen
   {
-    require(_investorETCIncomeWallet != address(0));
-    require(_investorOneTokenWallet != address(0));
-    require(_investorBonusOneTokenWallet != address(0));
+    require(_incomeWallet != address(0));
+    require(_investorWallet != address(0));
     require(_releaseTime > 0);
     require(_weiMinAmount > 0);
     
-    if (_oneRate > 0) {
-      require(_oneRateTime > now);
+    if (_bonusRate > 0) {
+      require(_bonusRateTime > now);
     }
     
-    if (_finderBonusWalletShare > 0) {
-      require(_finderBonusWalletShare <= 100);
-      require(_finderOneTokenWallet != address(0));
+    if (_bonusFinderShare > 0) {
+      require(_bonusFinderShare <= 100);
+      require(_bonusWallet != address(0));
     }
-   
+    
     // Adding new key if not present:
-    if (investorsMap[_investorETCIncomeWallet]._investorETCIncomeWallet == address(0)) {
-      investorsMapKeys.push(_investorETCIncomeWallet);
-      InvestorAdded(_investorETCIncomeWallet);
+    if (investorsMap[_incomeWallet].incomeWallet == address(0)) {
+      investorsMapKeys.push(_incomeWallet);
+      InvestorAdded(_incomeWallet);
     } else {
-      InvestorUpdated(_investorETCIncomeWallet);
+      InvestorUpdated(_incomeWallet);
     }
   
-    investorsMap[_investorETCIncomeWallet]._investorETCIncomeWallet = _investorETCIncomeWallet;
-    investorsMap[_investorETCIncomeWallet]._investorOneTokenWallet = _investorOneTokenWallet;
-    investorsMap[_investorETCIncomeWallet]._investorBonusOneTokenWallet = _investorBonusOneTokenWallet;
-    investorsMap[_investorETCIncomeWallet]._finderOneTokenWallet = _finderOneTokenWallet;
-    investorsMap[_investorETCIncomeWallet]._finderETCWallet = _finderETCWallet;
-    investorsMap[_investorETCIncomeWallet]._finderBonusWalletShare = _finderBonusWalletShare;
-    investorsMap[_investorETCIncomeWallet]._weiMinAmount = _weiMinAmount;
-    investorsMap[_investorETCIncomeWallet]._oneRate = _oneRate;
-    investorsMap[_investorETCIncomeWallet]._oneRateTime = _oneRateTime;
-    investorsMap[_investorETCIncomeWallet]._kycPassed = _kycPassed;
-    investorsMap[_investorETCIncomeWallet]._releaseTime = _releaseTime;
+    investorsMap[_incomeWallet].incomeWallet = _incomeWallet;
+    investorsMap[_incomeWallet].investorWallet = _investorWallet;
+    investorsMap[_incomeWallet].finderWallet = _bonusWallet;
+    investorsMap[_incomeWallet].weiMinAmount = _weiMinAmount;
+    investorsMap[_incomeWallet].bonusRate = _bonusRate;
+    investorsMap[_incomeWallet].bonusRateTime = _bonusRateTime;
+    investorsMap[_incomeWallet].bonusFinderShare = _bonusFinderShare;
+    investorsMap[_incomeWallet].releaseTime = _releaseTime;
+  
+    updateInvestorKYC(_incomeWallet, _kycPassed);
   }
   
   /**
@@ -353,9 +365,9 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
   *
   * @param _investorETCIncomeWallet address The address of the investor wallet for ETC payments.
   */
-  function deleteDeal(address _investorETCIncomeWallet) external onlyOwner onlyWhileSale {
+  function deleteDeal(address _investorETCIncomeWallet) external onlyOwner onlyWhileOpen {
     require(_investorETCIncomeWallet != address(0));
-    require(investorsMap[_investorETCIncomeWallet]._investorETCIncomeWallet != address(0));
+    require(investorsMap[_investorETCIncomeWallet].incomeWallet != address(0));
   
     //delete from the map:
     delete investorsMap[_investorETCIncomeWallet];
@@ -384,11 +396,10 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
   */
   function updateInvestorKYC(address _wallet, bool _value) external onlyOwner {
     require(_wallet != address(0));
-    require(investorsMap[_wallet]._investorETCIncomeWallet == _wallet);
-    require(investorsMap[_wallet]._kycPassed != _value);
-  
-    InvestorKycUpdated(_wallet, investorsMap[_wallet]._kycPassed, _value);
-    investorsMap[_wallet]._kycPassed = _value;
+    require(kykPassed[_wallet] != _value);
+    
+    InvestorKycUpdated(_wallet, kykPassed[_wallet], _value);
+    kykPassed[_wallet] = _value;
   }
   
   /**
@@ -401,14 +412,14 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
   * important to authenticate money trail from start to end. That’s when KYC comes
   * into practice.
   *
-  * @param _investorOneTokenWallet address The address of the investor wallet for ONE tokens.
+  * @param _investorWallet address The address of the investor wallet for ONE tokens.
   * @param _tokenAmount ONE token amount based on invoice income.
   * @param _invoiceId fiat payment invoice id or BTC transaction id.
   * @param _kycPassed flag determining is investor passed KYC procedure for bank complience.
   * @param _releaseTime timestamp when token release is enabled
   */
   function addUpdateInvoiceDeal(
-    address _investorOneTokenWallet,
+    address _investorWallet,
     uint256 _tokenAmount,
     string _invoiceId,
     bool _kycPassed,
@@ -416,27 +427,28 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
   )
     external
     onlyOwner
-    onlyWhileSale
+    onlyWhileOpen
   {
-    require(_investorOneTokenWallet != address(0));
+    require(_investorWallet != address(0));
     require(bytes(_invoiceId).length > MIN_INVOICE_LENGTH);
     require(_tokenAmount > 0);
     require(_releaseTime > 0);
   
     // Adding new key if not present:
-    if (invoicesMap[_investorOneTokenWallet]._investorOneTokenWallet == address(0)) {
-      invoiceMapKeys.push(_investorOneTokenWallet);
-      InvoiceAdded(_investorOneTokenWallet);
+    if (invoicesMap[_investorWallet].investorWallet == address(0)) {
+      invoiceMapKeys.push(_investorWallet);
+      InvoiceAdded(_investorWallet);
     }
     else {
-      InvoiceUpdated(_investorOneTokenWallet);
+      InvoiceUpdated(_investorWallet);
     }
   
-    invoicesMap[_investorOneTokenWallet]._investorOneTokenWallet = _investorOneTokenWallet;
-    invoicesMap[_investorOneTokenWallet]._tokenAmount = _tokenAmount;
-    invoicesMap[_investorOneTokenWallet]._invoiceId = _invoiceId;
-    invoicesMap[_investorOneTokenWallet]._kycPassed = _kycPassed;
-    invoicesMap[_investorOneTokenWallet]._releaseTime = _releaseTime;
+    invoicesMap[_investorWallet].investorWallet = _investorWallet;
+    invoicesMap[_investorWallet].tokenAmount = _tokenAmount;
+    invoicesMap[_investorWallet].invoiceId = _invoiceId;
+    invoicesMap[_investorWallet].releaseTime = _releaseTime;
+    
+    updateInvestorKYC(_investorWallet, _kycPassed);
   }
   
   /**
@@ -444,9 +456,9 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
   *
   * @param _investorOneTokenWallet address The address of the investor wallet for ONE tokens.
   */
-  function deleteInvoiceDeal(address _investorOneTokenWallet) external onlyOwner onlyWhileSale {
+  function deleteInvoiceDeal(address _investorOneTokenWallet) external onlyOwner onlyWhileOpen {
     require(_investorOneTokenWallet != address(0));
-    require(invoicesMap[_investorOneTokenWallet]._investorOneTokenWallet != address(0));
+    require(invoicesMap[_investorOneTokenWallet].investorWallet != address(0));
   
     //delete from the map:
     delete invoicesMap[_investorOneTokenWallet];
@@ -466,22 +478,7 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
   
     InvoiceDeleted(_investorOneTokenWallet);
   }
-  
-  /**
-  * @dev Update KYC flag for invoice based deal.
-  *
-  * @param _wallet address The address of the investor wallet for ONE tokens.
-  * @param _value flag determining is investor passed KYC procedure for bank complience.
-  */
-  function updateInvoiceKYC(address _wallet, bool _value) external onlyOwner {
-    require(_wallet != address(0));
-    require(invoicesMap[_wallet]._investorOneTokenWallet == _wallet);
-    require(invoicesMap[_wallet]._kycPassed != _value);
-  
-    InvoiceKycUpdated(_wallet, invoicesMap[_wallet]._kycPassed, _value);
-    invoicesMap[_wallet]._kycPassed = _value;
-  }
-  
+
   //endregion
   
   
@@ -490,28 +487,16 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
   /***********************************************************************/
   
   /**
+   * @dev Determines how ETH is stored/forwarded on purchases.
+   */
+  function forwardFunds() internal {
+    wallet.transfer(msg.value);
+  }
+  
+  /**
   * UNDONE docblock
   */
-  function getInvestorRate(address _beneficiary) internal isWhitelisted view returns (uint256) {
-    uint256 oneRateTime =  investorsMap[_beneficiary]._oneRateTime;
-    uint256 oneRate = investorsMap[_beneficiary]._oneRate;
-    
-    if (oneRateTime >= now && oneRate > 0) {
-      return oneRate;
-    }
-    
-    return getRate();
-  }
 
-  /**
-  * @dev Overrides delivery by minting tokens upon purchase.
-  *
-  * @param _beneficiary Token purchaser
-  * @param _tokenAmount Number of tokens to be minted
-  */
-  function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
-    require(MintableToken(token).mint(_beneficiary, _tokenAmount));
-  }
 
   //@Override Impl FinalizableCrowdsale
   function finalization() internal onlyOwner {
@@ -522,21 +507,11 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
     
     }
     
-    // Adding 41% of the total token supply (59% were generated during the crowdsale)
-    // using a simple rule of proportion
-    uint256 newTotalSupply = token.totalSupply().mul(41).div(59);
+    uint256 newTotalSupply = ONE.totalSupply().mul(100).div(icoPart);
     
-    // 12% of the total number of ONE tokens will be allocated to the team and SDK developers
-    _deliverTokens(walletTeam, newTotalSupply.mul(12).div(100));
-    
-    // 3% of the total number of ONE tokens will be allocated to professional fees and Bounties
-    _deliverTokens(walletAdvisers, newTotalSupply.mul(3).div(100));
-    
-    // 15% of the total number of ONE tokens will be allocated to Protocol One founders
-    _deliverTokens(walletFounders, newTotalSupply.mul(15).div(100));
-    
-    // 10% of the total number of ONE tokens will be allocated to Protocol One,
-    // and as a reserve for the company to be used for future strategic plans for the created ecosystem
-    _deliverTokens(walletReserve, newTotalSupply.mul(10).div(100));
+    ONE.mint(walletTeam, newTotalSupply.mul(teamPart).div(100));
+    ONE.mint(walletAdvisers, newTotalSupply.mul(advisersPart).div(100));
+    ONE.mint(walletFounders, newTotalSupply.mul(foundersPart).div(100));
+    ONE.mint(walletReserve, newTotalSupply.mul(reservePart).div(100));
   }
 }
