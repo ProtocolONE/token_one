@@ -148,7 +148,7 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
     LockRefundVault _refundVault
   )
     public
-    Crowdsale(_openingTime, _closingTime, EXCHANGE_RATE, _wallet, _token)
+    Crowdsale(_openingTime, _closingTime, EXCHANGE_RATE, _wallet, _oneToken)
     CappedCrowdsale(_cap)
   {
     require(_walletTeam != address(0));
@@ -432,11 +432,11 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
       InvoiceUpdated(_investorOneTokenWallet);
     }
   
-    invoicesMap[_investorETCIncomeWallet]._investorOneTokenWallet = _investorOneTokenWallet;
-    invoicesMap[_investorETCIncomeWallet]._tokenAmount = _tokenAmount;
-    invoicesMap[_investorETCIncomeWallet]._invoiceId = _invoiceId;
-    invoicesMap[_investorETCIncomeWallet]._kycPassed = _kycPassed;
-    invoicesMap[_investorETCIncomeWallet]._releaseTime = _releaseTime;
+    invoicesMap[_investorOneTokenWallet]._investorOneTokenWallet = _investorOneTokenWallet;
+    invoicesMap[_investorOneTokenWallet]._tokenAmount = _tokenAmount;
+    invoicesMap[_investorOneTokenWallet]._invoiceId = _invoiceId;
+    invoicesMap[_investorOneTokenWallet]._kycPassed = _kycPassed;
+    invoicesMap[_investorOneTokenWallet]._releaseTime = _releaseTime;
   }
   
   /**
@@ -446,10 +446,10 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
   */
   function deleteInvoiceDeal(address _investorOneTokenWallet) external onlyOwner onlyWhileSale {
     require(_investorOneTokenWallet != address(0));
-    require(invoiceMap[_investorOneTokenWallet]._investorOneTokenWallet != address(0));
+    require(invoicesMap[_investorOneTokenWallet]._investorOneTokenWallet != address(0));
   
     //delete from the map:
-    delete invoiceMap[_investorOneTokenWallet];
+    delete invoicesMap[_investorOneTokenWallet];
   
     //delete from the array (keys):
     uint256 index;
