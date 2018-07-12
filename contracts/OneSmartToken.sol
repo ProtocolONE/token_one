@@ -34,7 +34,7 @@ contract OneSmartToken is MintableToken {
   event Unlocked();
   event Locked();
   
-  constructor(address _manager) {
+  constructor(address _manager) public {
     require(_manager != address(0));
     manager = _manager;
   }

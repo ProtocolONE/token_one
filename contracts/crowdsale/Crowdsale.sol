@@ -1,8 +1,7 @@
 pragma solidity ^0.4.24;
 
-import "../token/ERC20.sol";
+import "../ownership/Ownable.sol";
 import "../math/SafeMath.sol";
-import "../token/SafeERC20.sol";
 
 
 /**
@@ -17,12 +16,14 @@ import "../token/SafeERC20.sol";
  * the methods to add functionality. Consider using 'super' where appropiate to concatenate
  * behavior.
  */
-contract Crowdsale {
+contract Crowdsale is Ownable {
   using SafeMath for uint256;
 
   // Address where funds are collected
   address public wallet;
-
+  
+  uint256 public rate;
+  
   // Amount of wei raised
   uint256 public weiRaised;
   
@@ -51,9 +52,8 @@ contract Crowdsale {
   /**
    * @param _rate Number of token units a buyer gets per wei
    * @param _wallet Address where collected funds will be forwarded to
-   * @param _token Address of the token being sold
    */
-  constructor(uint256 _openingTime, uint256 _closingTime, uint256 _rate, uint256 _softCap, uint256 _cap, address _wallet) public {
+  constructor(uint256 _openingTime, uint256 _closingTime, uint256 _rate, uint256 _softCap, uint256 _hardCap, address _wallet) public {
 
     require(_openingTime >= block.timestamp);
     require(_closingTime >= _openingTime);
@@ -62,7 +62,6 @@ contract Crowdsale {
     require(_softCap > 0);
     require(_hardCap >= _softCap);
     require(_wallet != address(0));
-    require(_token != address(0));
   
     openingTime = _openingTime;
     closingTime = _closingTime;
@@ -80,6 +79,11 @@ contract Crowdsale {
     require(block.timestamp >= openingTime && block.timestamp <= closingTime);
     _;
   }
+  
+  modifier hardCapNotReached() {
+    require(weiRaised.add(msg.value) <= hardCap);
+    _;
+  }
 
   // @return the crowdsale rate
   function getRate() public view returns (uint256) {
@@ -87,10 +91,10 @@ contract Crowdsale {
   }
   
   /**
-* @dev Set rate of ETH and update token price
-* @param _RateEth current ETH rate
-*/
-  function setRate(uint256 _RateEth) external onlyWhileSale onlyOwner {
+  * @dev Set rate of ETH and update token price
+  * @param _RateEth current ETH rate
+  */
+  function setRate(uint256 _RateEth) external onlyWhileOpen onlyOwner {
     rate = _RateEth;
   }
   
@@ -100,10 +104,6 @@ contract Crowdsale {
   */
   function hardCapReached() public view returns (bool) {
     return weiRaised >= hardCap;
-  }
-  
-  modifier hardCapNotReached() {
-    return weiRaised.add(msg.value) <= hardCap;
   }
   
   /**
