@@ -193,7 +193,7 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
    * @param _beneficiary Address performing the token purchase
    */
   function buyTokens(address _beneficiary) public payable isWhitelisted onlyWhileSale {
-    DealConditions investorDeal = investorsMap[_beneficiary];
+    DealConditions storage investorDeal = investorsMap[_beneficiary];
     require(investorDeal._investorETCIncomeWallet == _beneficiary);
     require(investorDeal._weiMinAmount <= _weiAmount);
     
