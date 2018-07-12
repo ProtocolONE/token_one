@@ -110,6 +110,8 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
   //Invoice -used for non-ether presale token generation
   address[] public invoiceMapKeys;
   mapping(address => InvoiceDealConditions) public invoicesMap;
+
+  uint256 startTime;
   
   // The refund vault
   LockRefundVault public refundVault;
@@ -167,6 +169,8 @@ contract OneCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
     walletFounders = _walletFounders;
     walletReserve = _walletReserve;
     walletMarketing = _walletMarketing;
+
+    startTime = _openingTime;
     
     token = _oneToken;
     refundVault = _refundVault;
