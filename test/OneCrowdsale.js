@@ -15,7 +15,7 @@ const should = require('chai')
 
 const OneCrowdsale = artifacts.require('../contracts/OneCrowdsale.sol')
 const OneSmartToken = artifacts.require('../contracts/OneSmartToken.sol')
-const RefVault = artifacts.require('../contracts/crowdsale/RefundVault.sol')
+const RefundVault = artifacts.require('../contracts/crowdsale/RefundVault.sol')
 
 contract('OneCrowdsale', function([_, investor, owner, wallet, walletTeam, walletAdvisers, 
     walletFounders, walletMarketing, walletReserve]) {
