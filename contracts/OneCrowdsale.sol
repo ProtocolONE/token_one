@@ -181,7 +181,7 @@ contract OneCrowdsale is FinalizableCrowdsale {
    * @param _beneficiary Address performing the token purchase
    */
   function buyTokens(address _beneficiary) public payable onlyWhitelisted onlyWhileOpen hardCapNotReached {
-    PreSaleConditions investorDeal = investorsMap[_beneficiary];
+    PreSaleConditions storage investorDeal = investorsMap[_beneficiary];
     require(investorDeal.weiMinAmount <= _weiAmount);
   
     uint256 weiAmount = msg.value;
