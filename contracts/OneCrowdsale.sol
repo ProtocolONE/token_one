@@ -345,7 +345,7 @@ contract OneCrowdsale is PreSaleCrowdsale {
   */
   function finishCrowdsale() onlyOwner public {
     require(!isFinalized);
-    require(hasClosed()); //UNDONE We need right check for hardcap or time not only time
+    require(hasClosed() || hardCapReached());
   
     //TODO  bonuses for the pre crowdsale invoice based payments:
     for (uint256 i = 0; i < invoiceMapKeys.length; i++) {
