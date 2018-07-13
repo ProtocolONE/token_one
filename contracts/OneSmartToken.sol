@@ -10,8 +10,8 @@ contract OneSmartToken is MintableToken {
   string public name = "ProtocolOne";
   string public symbol = "ONE";
   uint8 public decimals = 18;
-
-  // This state is specific to the token generation event. We disallow
+    
+    // This state is specific to the token generation event. We disallow
   // to transfer token before exchange listing.
   bool public locked = true;
   address manager;

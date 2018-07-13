@@ -119,7 +119,6 @@ contract PreSaleCrowdsale is Crowdsale {
    * @param _bonusRate ONE to ETH rate for investor
    * @param _bonusRateTime timestamp when token rate should be used
    * @param _bonusShare amount of bonus ONE tokens distributed between _investorWallet and _bonusWallet
-   * @param _releaseTime timestamp when token release is enabled
    */
   function addUpdatePreSaleDeal(
     address _incomeWallet,
@@ -128,8 +127,7 @@ contract PreSaleCrowdsale is Crowdsale {
     uint256 _weiMinAmount,
     uint256 _bonusRate,
     uint256 _bonusRateTime,
-    uint256 _bonusShare,
-    uint256 _releaseTime
+    uint256 _bonusShare
   )
   external
   onlyOwner
@@ -137,7 +135,6 @@ contract PreSaleCrowdsale is Crowdsale {
   {
     require(_incomeWallet != address(0));
     require(_investorWallet != address(0));
-    require(_releaseTime > 0);
     require(_weiMinAmount > 0);
     
     if (_bonusRate > 0) {
@@ -148,24 +145,24 @@ contract PreSaleCrowdsale is Crowdsale {
       require(_bonusShare <= 100);
       require(_bonusWallet != address(0));
     }
-    
+  
+    PreSaleConditions storage investor = investorsMap[_incomeWallet];
     // Adding new key if not present:
-    if (investorsMap[_incomeWallet].incomeWallet == address(0)) {
+    if (investor.incomeWallet == address(0)) {
       investorsMapKeys.push(_incomeWallet);
       emit InvestorAdded(_incomeWallet);
     } else {
       emit InvestorUpdated(_incomeWallet);
     }
     
-    investorsMap[_incomeWallet].incomeWallet = _incomeWallet;
-    investorsMap[_incomeWallet].investorWallet = _investorWallet;
-    investorsMap[_incomeWallet].weiMinAmount = _weiMinAmount;
-    investorsMap[_incomeWallet].bonusWallet = _bonusWallet;
-    investorsMap[_incomeWallet].bonusRate = _bonusRate;
-    investorsMap[_incomeWallet].bonusRateTime = _bonusRateTime;
-    investorsMap[_incomeWallet].bonusShare = _bonusShare;
-    investorsMap[_incomeWallet].releaseTime = _releaseTime;
-    investorsMap[_incomeWallet].completed = false;
+    investor.incomeWallet = _incomeWallet;
+    investor.investorWallet = _investorWallet;
+    investor.weiMinAmount = _weiMinAmount;
+    investor.bonusWallet = _bonusWallet;
+    investor.bonusRate = _bonusRate;
+    investor.bonusRateTime = _bonusRateTime;
+    investor.bonusShare = _bonusShare;
+    investor.completed = false;
   }
   
   /**
@@ -204,13 +201,11 @@ contract PreSaleCrowdsale is Crowdsale {
    * @param _wallet address The address of the investor wallet for ONE tokens.
    * @param _tokens ONE token amount based on invoice income.
    * @param _invoiceId fiat payment invoice id or BTC transaction id.
-   * @param _releaseTime timestamp when token release is enabled
    */
   function addUpdateInvoice(
     address _wallet,
     uint256 _tokens,
-    string _invoiceId,
-    uint256 _releaseTime
+    string _invoiceId
   )
   external
   onlyOwner
@@ -218,20 +213,19 @@ contract PreSaleCrowdsale is Crowdsale {
   {
     require(_wallet != address(0));
     require(_tokens > 0);
-    require(_releaseTime > now);
-    
+  
+    InvestorConditions storage invoice = invoicesMap[_wallet];
     // Adding new key if not present:
-    if (invoicesMap[_wallet].wallet == address(0)) {
+    if (invoice.wallet == address(0)) {
       invoiceMapKeys.push(_wallet);
       emit InvoiceAdded(_wallet, _tokens, _invoiceId);
     }
     else {
       emit InvoiceUpdated(_wallet, _tokens, _invoiceId);
     }
-    
-    invoicesMap[_wallet].wallet = _wallet;
-    invoicesMap[_wallet].tokens = _tokens;
-    invoicesMap[_wallet].releaseTime = _releaseTime;
+  
+    invoice.wallet = _wallet;
+    invoice.tokens = _tokens;
   }
   
   /**
@@ -261,5 +255,4 @@ contract PreSaleCrowdsale is Crowdsale {
     
     emit InvoiceDeleted(_wallet);
   }
-
 }

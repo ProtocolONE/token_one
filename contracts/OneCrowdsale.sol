@@ -5,10 +5,8 @@ import "./math/SafeMath.sol";
 import "./OneSmartToken.sol";
 /*
 Чек лист:
-- можно возвращать если не пройден кик
 - везде добавить события
-- добавить вестинг на время для инвесторов
-- добавить вестинг на команду
+- добавить вестинг на команду - перечисляется на кошелек по расписанию.
 */
 
 
@@ -28,18 +26,12 @@ contract OneCrowdsale is PreSaleCrowdsale {
   using SafeMath for uint256;
   
   OneSmartToken public ONE = new OneSmartToken(this);
-  /***********************************************************************/
-  /**                              Constants
-  /***********************************************************************/
   
   // ONE to ETH base rate
   uint256 public constant EXCHANGE_RATE = 500;
   
   // Minimal length of invoice id for fiat/BTC payments
   uint256 public constant MIN_INVOICE_LENGTH = 5;
-  
-  // Share amount in ETC for marketing purposes during campaign
-  uint256 public constant WALLET_MARKETING_SHARE = 10;
 
   struct DealDeposit{
     address investorWallet;
@@ -47,10 +39,17 @@ contract OneCrowdsale is PreSaleCrowdsale {
     uint256 depositedETH;
     uint256 depositedTokens;
     uint256 depositedBonusTokens;
-    uint256 releaseTime;
+    uint256 transferred;
   }
   
-  event DepositAdded(address indexed _wallet, address indexed _bonusWallet, uint256 _wei, uint256 _tokens, uint256 _bonusTokens, uint256 _releaseTime);
+  struct DepositTimeLock {
+    uint256 mainCliffAmount;
+    uint256 mainCliffTime;
+    uint256 additionalCliffTime;
+    uint256 additionalCliffAmount;
+  }
+  
+  event DepositAdded(address indexed _wallet, address indexed _bonusWallet, uint256 _wei, uint256 _tokens, uint256 _bonusTokens);
   event RefundedDeposit(address indexed _wallet, uint256 _tokens, uint256 _wei);
   event Finalized();
  
@@ -72,6 +71,7 @@ contract OneCrowdsale is PreSaleCrowdsale {
   address public walletReserve; //
 
   mapping(address => DealDeposit) public depositMap;
+  mapping(address => DepositTimeLock) public depositTimeLockMap;
   
   /**
   * @param _hardCap Max amount of wei to be contributed
@@ -148,8 +148,7 @@ contract OneCrowdsale is PreSaleCrowdsale {
       investorDeal.bonusWallet,
       weiAmount,
       baseDealTokens,
-      bonusTokens,
-      investorDeal.releaseTime
+      bonusTokens
     );
 
     investorsMap[_beneficiary].completed = true;
@@ -179,8 +178,7 @@ contract OneCrowdsale is PreSaleCrowdsale {
     address _bonusWaller,
     uint256 _wei,
     uint256 _tokens,
-    uint256 _bonusTokens,
-    uint256 _releaseTime
+    uint256 _bonusTokens
   )
     internal
     onlyOwner
@@ -194,13 +192,45 @@ contract OneCrowdsale is PreSaleCrowdsale {
     depositMap[_incomeWallet].depositedETH.add(_wei);
     depositMap[_incomeWallet].depositedTokens.add(_tokens);
     depositMap[_incomeWallet].depositedBonusTokens.add(_bonusTokens);
-    depositMap[_incomeWallet].releaseTime = _releaseTime;
   
     ONE.mint(wallet, _tokens.add(_bonusTokens)); //UNDONE
     
-    emit DepositAdded(_wallet, _bonusWaller, _wei, _tokens, _bonusTokens, _releaseTime);
+    emit DepositAdded(_wallet, _bonusWaller, _wei, _tokens, _bonusTokens);
   }
 
+  function assignDepositTimeLock(
+    address _wallet,
+    uint256 _mainCliffAmount,
+    uint256 _mainCliffTime,
+    uint256 _additionalCliffTime,
+    uint256 _additionalCliffAmount
+  )
+    external onlyOwner onlyWhileOpen
+  {
+    require(_wallet != address(0));
+    require(_mainCliffTime > 0);
+    require(_mainCliffAmount > 0 && _mainCliffAmount < 100);
+    
+    if (_additionalCliffTime > 0) {
+      require(_additionalCliffTime > _mainCliffTime);
+      require(_mainCliffAmount.add(_additionalCliffAmount) < 100);
+    }
+    
+    
+    DepositTimeLock storage timeLock = depositTimeLockMap[_wallet];
+    timeLock.mainCliffAmount = _mainCliffAmount;
+    timeLock.mainCliffTime = _mainCliffTime;
+    timeLock.additionalCliffTime = _additionalCliffTime;
+    timeLock.additionalCliffAmount = _additionalCliffAmount;
+  }
+  
+  function deleteDepositTimeLock( address _wallet) external onlyOwner onlyWhileOpen {
+    require(_wallet != address(0));
+    
+    delete depositTimeLockMap[_wallet];
+  }
+  
+  
   /**
    * @dev Allow manager to refund deposits without kyc passed.
    *
@@ -234,25 +264,44 @@ contract OneCrowdsale is PreSaleCrowdsale {
    */
   function claimTokens() public onlyKYCPassed {
     address investor = msg.sender;
+    DealDeposit storage deposit = depositMap[investor];
     
-    require(depositMap[investor].releaseTime > now);
-    require(depositMap[investor].depositedTokens > 0);
+    require(deposit.depositedTokens > 0);
     
-    uint256 depositedToken = depositMap[investor].depositedTokens;
-    address investorWallet = depositMap[investor].investorWallet;
+    uint256 depositedToken = deposit.depositedTokens;
+    address investorWallet = deposit.investorWallet;
     
-    depositMap[investor].depositedTokens = 0;
-    ONE.transfer(investorWallet, depositedToken);
+    if (deposit.depositedBonusTokens > 0) {
+      deposit.depositedBonusTokens = 0;
+      ONE.transfer(deposit.bonusWallet, deposit.depositedBonusTokens);
+    }
+  
+    DepositTimeLock storage timeLock = depositTimeLockMap[investor];
     
-    uint256 depositedBonusTokens = depositMap[investor].depositedBonusTokens;
-    if (depositedBonusTokens > 0) {
-      address bonusWallet = depositMap[investor].bonusWallet;
-      depositMap[investor].depositedBonusTokens = 0;
-      
-      ONE.transfer(bonusWallet, depositedBonusTokens);
+    uint256 vested;
+    if (timeLock.mainCliffTime > 0 && timeLock.mainCliffTime <= now) {
+      vested = deposit.depositedTokens.mul(timeLock.mainCliffAmount).div(100);
+    } else if (timeLock.additionalCliffTime > 0 && timeLock.additionalCliffTime <= now) {
+      uint256 totalCliff = timeLock.mainCliffAmount.add(timeLock.additionalCliffAmount);
+      vested = deposit.depositedTokens.mul(totalCliff).div(100);
+    } else {
+      vested = deposit.depositedTokens;
+    }
+  
+    if (vested == 0) {
+      return;
     }
     
+    // Make sure the holder doesn't transfer more than what he already has.
+    uint256 transferable = vested.sub(deposit.transferred);
+    if (transferable == 0) {
+      return;
+    }
   
+    deposit.transferred = deposit.transferred.add(transferable);
+    ONE.transfer(investorWallet, depositedToken);
+  
+    
     /*
     investorsMapKeys[index] = investorsMapKeys[investorsMapKeys.length - 1];
     delete investorsMapKeys[investorsMapKeys.length - 1];
@@ -303,9 +352,8 @@ contract OneCrowdsale is PreSaleCrowdsale {
       address key = invoiceMapKeys[i];
       address wallet = invoicesMap[key].wallet;
       uint256 tokens = invoicesMap[key].tokens;
-      uint256 releaseTime = invoicesMap[key].releaseTime;
     
-      addDeposit(wallet, wallet, address(0), 0, tokens, 0, releaseTime);
+      addDeposit(wallet, wallet, address(0), 0, tokens, 0);
     }
   
     uint256 newTotalSupply = ONE.totalSupply().mul(100).div(icoPart);
