@@ -1,6 +1,6 @@
 pragma solidity ^0.4.24;
 
-import "../ownership/Ownable.sol";
+import "../ownership/Administrable.sol";
 import "../math/SafeMath.sol";
 
 
@@ -16,7 +16,7 @@ import "../math/SafeMath.sol";
  * the methods to add functionality. Consider using 'super' where appropiate to concatenate
  * behavior.
  */
-contract Crowdsale is Ownable {
+contract Crowdsale is Administrable {
   using SafeMath for uint256;
 
   // Address where funds are collected

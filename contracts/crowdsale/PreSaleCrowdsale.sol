@@ -18,7 +18,6 @@ contract PreSaleCrowdsale is Crowdsale {
   * @see addUpdateDeal for details.
   */
   struct PreSaleConditions  {
-    address incomeWallet;
     address investorWallet;
     address bonusWallet;
     uint256 weiMinAmount;
@@ -65,15 +64,7 @@ contract PreSaleCrowdsale is Crowdsale {
    * @dev Reverts if beneficiary is not whitelisted. Can be used when extending this contract.
    */
   modifier onlyWhitelisted() {
-    require(investorsMap[msg.sender].incomeWallet == msg.sender);
-    _;
-  }
-  
-  /**
-   * @dev Reverts if beneficiary is not whitelisted. Can be used when extending this contract.
-   */
-  modifier onlyNotCompleted() {
-    require(investorsMap[msg.sender].completed == false);
+    require(investorsMap[msg.sender].investorWallet != address(0));
     _;
   }
   
@@ -100,7 +91,7 @@ contract PreSaleCrowdsale is Crowdsale {
    * @param _wallet address The address of the investor wallet for ETC payments.
    * @param _value flag determining is investor passed KYC procedure for bank complience.
    */
-  function updateInvestorKYC(address _wallet, bool _value) external onlyOwner {
+  function updateInvestorKYC(address _wallet, bool _value) external onlyAdmins {
     require(_wallet != address(0));
     require(kykPassed[_wallet] != _value);
     
@@ -129,9 +120,7 @@ contract PreSaleCrowdsale is Crowdsale {
     uint256 _bonusRateTime,
     uint256 _bonusShare
   )
-  external
-  onlyOwner
-  onlyWhileOpen
+    external onlyAdmins onlyWhileOpen
   {
     require(_incomeWallet != address(0));
     require(_investorWallet != address(0));
@@ -148,14 +137,13 @@ contract PreSaleCrowdsale is Crowdsale {
   
     PreSaleConditions storage investor = investorsMap[_incomeWallet];
     // Adding new key if not present:
-    if (investor.incomeWallet == address(0)) {
-      investorsMapKeys.push(_incomeWallet);
+    if (investor.investorWallet == address(0)) {
+      investorsMapKeys.push(_investorWallet);
       emit InvestorAdded(_incomeWallet);
     } else {
       emit InvestorUpdated(_incomeWallet);
     }
-    
-    investor.incomeWallet = _incomeWallet;
+   
     investor.investorWallet = _investorWallet;
     investor.weiMinAmount = _weiMinAmount;
     investor.bonusWallet = _bonusWallet;
@@ -170,9 +158,8 @@ contract PreSaleCrowdsale is Crowdsale {
    *
    * @param _incomeWallet address The address of the investor wallet for ETC payments.
    */
-  function deletePreSaleDeal(address _incomeWallet) external onlyOwner onlyWhileOpen {
-    require(_incomeWallet != address(0));
-    require(investorsMap[_incomeWallet].incomeWallet != address(0));
+  function deletePreSaleDeal(address _incomeWallet) external onlyAdmins onlyWhileOpen {
+    require(investorsMap[_incomeWallet].investorWallet != address(0));
     
     //delete from the map:
     delete investorsMap[_incomeWallet];
@@ -207,9 +194,7 @@ contract PreSaleCrowdsale is Crowdsale {
     uint256 _tokens,
     string _invoiceId
   )
-  external
-  onlyOwner
-  onlyWhileOpen
+    external onlyAdmins onlyWhileOpen
   {
     require(_wallet != address(0));
     require(_tokens > 0);
@@ -233,7 +218,7 @@ contract PreSaleCrowdsale is Crowdsale {
    *
    * @param _wallet address The address of the investor wallet for ONE tokens.
    */
-  function deleteInvoice(address _wallet) external onlyOwner onlyWhileOpen {
+  function deleteInvoice(address _wallet) external onlyAdmins onlyWhileOpen {
     require(_wallet != address(0));
     require(invoicesMap[_wallet].wallet != address(0));
     
