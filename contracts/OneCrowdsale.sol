@@ -3,6 +3,16 @@ pragma solidity ^0.4.19;
 import "./crowdsale/FinalizableCrowdsale.sol";
 import "./math/SafeMath.sol";
 import "./OneSmartToken.sol";
+/*
+Чек лист:
+- можно возвращать если не пройден кик
+- дочинить депозиты
+- везде добавить события
+- вылизать интерфейс фиата
+- добавить вестинг на время для инвесторов
+- добавить вестинг на команду
+*/
+
 
 /**
 * In 2018 and in real world a huge amount of conditions required to success processing
@@ -51,6 +61,7 @@ contract OneCrowdsale is FinalizableCrowdsale {
     uint256 bonusRate;
     uint256 bonusRateTime;
     uint256 releaseTime;
+    uint256 completed;
   }
   
   /**
@@ -114,7 +125,15 @@ contract OneCrowdsale is FinalizableCrowdsale {
    * @dev Reverts if beneficiary is not whitelisted. Can be used when extending this contract.
    */
   modifier onlyWhitelisted() {
-    require(investorsMap[msg.sender].incomeWallet == msg.sender);
+    require(investorsMap[msg.sender].incomeWallet == msg.sender && investorsMap[msg.sender]);
+    _;
+  }
+  
+  /**
+   * @dev Reverts if beneficiary is not whitelisted. Can be used when extending this contract.
+   */
+  modifier onlyNotCompleted() {
+    require(investorsMap[msg.sender].completed == false);
     _;
   }
   
@@ -178,7 +197,9 @@ contract OneCrowdsale is FinalizableCrowdsale {
   /**
    * @param _beneficiary Address performing the token purchase
    */
-  function buyTokens(address _beneficiary) public payable onlyWhitelisted onlyWhileOpen hardCapNotReached {
+  function buyTokens(address _beneficiary)
+    public payable onlyWhitelisted onlyNotCompleted onlyWhileOpen hardCapNotReached
+  {
     uint256 weiAmount = msg.value;
     
     PreSaleConditions storage investorDeal = investorsMap[_beneficiary];
@@ -210,7 +231,8 @@ contract OneCrowdsale is FinalizableCrowdsale {
       }
     }
     depositMap[_beneficiary].depositedTokens = baseDealTokens;
-    
+    investorsMap[_beneficiary].completed = true;
+  
     // update state
     weiRaised = weiRaised.add(weiAmount);
     
@@ -367,7 +389,8 @@ contract OneCrowdsale is FinalizableCrowdsale {
     investorsMap[_incomeWallet].bonusRateTime = _bonusRateTime;
     investorsMap[_incomeWallet].bonusFinderShare = _bonusFinderShare;
     investorsMap[_incomeWallet].releaseTime = _releaseTime;
-  
+    investorsMap[_incomeWallet].completed = false;
+    
     this.updateInvestorKYC(_incomeWallet, _kycPassed);
   }
   
