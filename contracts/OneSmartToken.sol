@@ -31,6 +31,7 @@ contract OneSmartToken is MintableToken {
     _;
   }
   
+  event Burn(address indexed burner, uint256 value);
   event Unlocked();
   event Locked();
   
@@ -47,6 +48,23 @@ contract OneSmartToken is MintableToken {
   function lock() public onlyManager whenNotLocked {
     locked = true;
     emit Unlocked();
+  }
+  
+  /**
+   * @dev Burns a specific amount of tokens.
+   *
+   * @param _who token holder address which the tokens will be burnt
+   * @param _value number of tokens to burn
+   */
+  function burn(address _who, uint256 _value) external onlyManager {
+    require(_value <= balances[_who]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+    
+    balances[_who] = balances[_who].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    
+    emit Burn(_who, _value);
   }
   
   /**

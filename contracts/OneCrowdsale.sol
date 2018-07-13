@@ -6,7 +6,6 @@ import "./OneSmartToken.sol";
 /*
 Чек лист:
 - можно возвращать если не пройден кик
-- дочинить депозиты
 - везде добавить события
 - добавить вестинг на время для инвесторов
 - добавить вестинг на команду
@@ -51,6 +50,8 @@ contract OneCrowdsale is PreSaleCrowdsale {
     uint256 releaseTime;
   }
   
+  event DepositAdded(address indexed _wallet, address indexed _bonusWallet, uint256 _wei, uint256 _tokens, uint256 _bonusTokens, uint256 _releaseTime);
+  event RefundedDeposit(address indexed _wallet, uint256 _tokens, uint256 _wei);
   event Finalized();
  
   /***********************************************************************/
@@ -155,6 +156,23 @@ contract OneCrowdsale is PreSaleCrowdsale {
     forwardFunds();
   }
   
+  /**
+   * @dev Allow managers to lock tokens distribution while campaign not ended.
+   */
+  function lockTokens() external onlyOwner {
+    ONE.lock();
+  }
+  
+  /**
+   * @dev Allow managers to unlock tokens distribution while campaign not ended.
+   */
+  function unlockTokens() external onlyOwner {
+    ONE.unlock();
+  }
+  
+  /**
+   * UNDONE
+   */
   function addDeposit(
     address _incomeWallet,
     address _wallet,
@@ -179,37 +197,58 @@ contract OneCrowdsale is PreSaleCrowdsale {
     depositMap[_incomeWallet].releaseTime = _releaseTime;
   
     ONE.mint(wallet, _tokens.add(_bonusTokens)); //UNDONE
+    
+    emit DepositAdded(_wallet, _bonusWaller, _wei, _tokens, _bonusTokens, _releaseTime);
+  }
+
+  /**
+   * @dev Allow manager to refund deposits without kyc passed.
+   *
+   * @param _wallet the address of the investor wallet for ETC payments.
+   */
+  function refundDeposit(address _wallet) external onlyKYCNotPassed onlyOwner {
+    require(depositMap[_wallet].depositedTokens > 0);
+    
+    uint256 tokens = depositMap[_wallet].depositedTokens;
+    uint256 bonusTokens = depositMap[_wallet].depositedBonusTokens;
+    uint256 refundTokens = tokens.add(bonusTokens);
+  
+    require(refundTokens > 0);
+    
+    depositMap[_wallet].depositedTokens = 0;
+    depositMap[_wallet].depositedBonusTokens = 0;
+    
+    ONE.burn(address(this), refundTokens);
+
+    uint256 ETHToRefund = depositMap[_wallet].depositedETH;
+    if (ETHToRefund > 0) {
+      depositMap[_wallet].depositedETH = 0;
+      _wallet.transfer(ETHToRefund);
+    }
+  
+    emit RefundedDeposit(_wallet, refundTokens, ETHToRefund);
   }
   
-  /***********************************************************************/
-  /**                              Public Methods
-  /***********************************************************************/
-  
-  function lockTokens() public onlyOwner {
-    ONE.lock();
-  }
-  
-  function unlockTokens() public onlyOwner {
-    ONE.unlock();
-  }
-  
+  /**
+   * @dev Investor should call this method to claim they tokens from deposit
+   */
   function claimTokens() public onlyKYCPassed {
     address investor = msg.sender;
-  
+    
     require(depositMap[investor].releaseTime > now);
     require(depositMap[investor].depositedTokens > 0);
-  
+    
     uint256 depositedToken = depositMap[investor].depositedTokens;
     address investorWallet = depositMap[investor].investorWallet;
     
     depositMap[investor].depositedTokens = 0;
     ONE.transfer(investorWallet, depositedToken);
-  
+    
     uint256 depositedBonusTokens = depositMap[investor].depositedBonusTokens;
     if (depositedBonusTokens > 0) {
       address bonusWallet = depositMap[investor].bonusWallet;
       depositMap[investor].depositedBonusTokens = 0;
-  
+      
       ONE.transfer(bonusWallet, depositedBonusTokens);
     }
     
@@ -243,15 +282,6 @@ contract OneCrowdsale is PreSaleCrowdsale {
     
     return 0;
   }
-  
-  /***********************************************************************/
-  /**                              External Methods
-  /***********************************************************************/
-
-  
-  /***********************************************************************/
-  /**                         Internals
-  /***********************************************************************/
   
   /**
    * @dev Determines how ETH is stored/forwarded on purchases.

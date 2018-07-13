@@ -56,6 +56,11 @@ contract PreSaleCrowdsale is Crowdsale {
     _;
   }
   
+  modifier onlyKYCNotPassed() {
+    require(kykPassed[msg.sender] == false);
+    _;
+  }
+  
   /**
    * @dev Reverts if beneficiary is not whitelisted. Can be used when extending this contract.
    */
