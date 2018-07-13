@@ -18,10 +18,7 @@ import "../math/SafeMath.sol";
  */
 contract Crowdsale is Administrable {
   using SafeMath for uint256;
-
-  // Address where funds are collected
-  address public wallet;
-  
+ 
   uint256 public rate;
   
   // Amount of wei raised
@@ -34,41 +31,26 @@ contract Crowdsale is Administrable {
   uint256 public softCap;
   
   uint256 public hardCap;
-  
-  /**
-   * Event for token purchase logging
-   * @param purchaser who paid for the tokens
-   * @param beneficiary who got the tokens
-   * @param value weis paid for purchase
-   * @param amount amount of tokens purchased
-   */
-  event TokenPurchase(
-    address indexed purchaser,
-    address indexed beneficiary,
-    uint256 value,
-    uint256 amount
-  );
 
   /**
    * @param _rate Number of token units a buyer gets per wei
    * @param _wallet Address where collected funds will be forwarded to
    */
-  constructor(uint256 _openingTime, uint256 _closingTime, uint256 _rate, uint256 _softCap, uint256 _hardCap, address _wallet) public {
+  constructor(uint256 _openingTime, uint256 _closingTime, uint256 _rate, uint256 _softCap, uint256 _hardCap) public {
 
     require(_openingTime >= block.timestamp);
     require(_closingTime >= _openingTime);
-    
+  
     require(_rate > 0);
     require(_softCap > 0);
     require(_hardCap >= _softCap);
-    require(_wallet != address(0));
-  
+    
     openingTime = _openingTime;
     closingTime = _closingTime;
+    
     rate = _rate;
     hardCap = _hardCap;
     softCap = _softCap;
-    wallet = _wallet;
   }
   
   /**
@@ -85,39 +67,41 @@ contract Crowdsale is Administrable {
     _;
   }
 
-  // @return the crowdsale rate
+  /**
+   * @return the crowdsale rate
+   */
   function getRate() public view returns (uint256) {
     return rate;
   }
   
   /**
-  * @dev Set rate of ETH and update token price
-  * @param _RateEth current ETH rate
-  */
+   * @dev Set rate of ETH and update token price
+   * @param _RateEth current ETH rate
+   */
   function setRate(uint256 _RateEth) external onlyWhileOpen onlyOwner {
     rate = _RateEth;
   }
   
   /**
-  * @dev Checks whether the cap has been reached.
-  * @return Whether the cap was reached
-  */
+   * @dev Checks whether the cap has been reached.
+   * @return Whether the cap was reached
+   */
   function hardCapReached() public view returns (bool) {
     return weiRaised >= hardCap;
   }
   
   /**
-  * @dev Checks whether the cap has been reached.
-  * @return Whether the cap was reached
-  */
+   * @dev Checks whether the cap has been reached.
+   * @return Whether the cap was reached
+   */
   function softCapReached() public view returns (bool) {
     return weiRaised >= softCap;
   }
   
   /**
-  * @dev Checks whether the period in which the crowdsale is open has already elapsed.
-  * @return Whether crowdsale period has elapsed
-  */
+   * @dev Checks whether the period in which the crowdsale is open has already elapsed.
+   * @return Whether crowdsale period has elapsed
+   */
   function hasClosed() public view returns (bool) {
     // solium-disable-next-line security/no-block-members
     return block.timestamp > closingTime;

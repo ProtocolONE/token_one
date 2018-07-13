@@ -10,24 +10,25 @@ contract OneSmartToken is MintableToken {
   string public name = "ProtocolOne";
   string public symbol = "ONE";
   uint8 public decimals = 18;
-    
-    // This state is specific to the token generation event. We disallow
+  
+  address parentContract;
+  
+  // This state is specific to the token generation event. We disallow
   // to transfer token before exchange listing.
   bool public locked = true;
-  address manager;
   
   modifier whenNotLocked() {
-    require(!locked);
+    if (locked == true) revert();
     _;
   }
   
   modifier whenLocked() {
-    require(locked);
+    if (locked == false) revert();
     _;
   }
   
-  modifier onlyManager {
-    require(msg.sender  == manager);
+  modifier onlyOwner {
+    if (msg.sender != owner && msg.sender != parentContract) revert();
     _;
   }
   
@@ -35,18 +36,26 @@ contract OneSmartToken is MintableToken {
   event Unlocked();
   event Locked();
   
-  constructor(address _manager) public {
-    require(_manager != address(0));
-    manager = _manager;
+  constructor(address _parentContract) public {
+    require(_parentContract != address(0));
+    parentContract = _parentContract;
   }
   
-  function unlock() public onlyManager whenLocked {
+  /**
+   * @dev Allow managers to lock tokens distribution while campaign not ended.
+   */
+  function unlock() public onlyOwner whenLocked {
     locked = false;
+    
     emit Unlocked();
   }
   
-  function lock() public onlyManager whenNotLocked {
+  /**
+   * @dev Allow managers to unlock tokens distribution while campaign not ended.
+   */
+  function lock() public onlyOwner whenNotLocked {
     locked = true;
+    
     emit Unlocked();
   }
   
@@ -56,7 +65,7 @@ contract OneSmartToken is MintableToken {
    * @param _who token holder address which the tokens will be burnt
    * @param _value number of tokens to burn
    */
-  function burn(address _who, uint256 _value) external onlyManager {
+  function burn(address _who, uint256 _value) external onlyOwner {
     require(_value <= balances[_who]);
     // no need to require value <= totalSupply, since that would imply the
     // sender's balance is greater than the totalSupply, which *should* be an assertion failure
