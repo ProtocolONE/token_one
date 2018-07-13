@@ -34,7 +34,6 @@ contract Crowdsale is Administrable {
 
   /**
    * @param _rate Number of token units a buyer gets per wei
-   * @param _wallet Address where collected funds will be forwarded to
    */
   constructor(uint256 _openingTime, uint256 _closingTime, uint256 _rate, uint256 _softCap, uint256 _hardCap) public {
 

@@ -368,11 +368,10 @@ contract OneCrowdsale is PreSaleCrowdsale {
     require(hasClosed() || hardCapReached());
   
     for (uint256 i = 0; i < invoiceMapKeys.length; i++) {
-      address key = invoiceMapKeys[i];
-      address wallet = invoicesMap[key].wallet;
-      uint256 tokens = invoicesMap[key].tokens;
+      address investorWallet = invoiceMapKeys[i];
+      uint256 tokens = invoicesMap[investorWallet];
     
-      addDeposit(wallet, wallet, address(0), 0, tokens, 0);
+      addDeposit(investorWallet, investorWallet, address(0), 0, tokens, 0);
     }
   
     uint256 newTotalSupply = ONE.totalSupply().mul(100).div(icoPart);
