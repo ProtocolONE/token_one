@@ -24,7 +24,6 @@ contract PreSaleCrowdsale is Crowdsale {
     uint256 bonusShare;
     uint256 bonusRate;
     uint256 bonusRateTime;
-    uint256 releaseTime;
     bool completed;
   }
   
@@ -37,19 +36,7 @@ contract PreSaleCrowdsale is Crowdsale {
   event InvoiceDeleted(address indexed _wallet);
   
   event KYCUpdated(address indexed _grantee, bool _oldValue, bool _value);
-  
-  /**
-  * The structure to hold private round condition for token distribution and
-  * refund based on invoice/BTC payments.
-  *
-  * @see addUpdateInvoiceDeal for details.
-  */
-  struct InvestorConditions {
-    address wallet;
-    uint256 tokens;
-    uint256 releaseTime;
-  }
-  
+ 
   modifier onlyKYCPassed() {
     require(kykPassed[msg.sender]);
     _;
@@ -74,7 +61,7 @@ contract PreSaleCrowdsale is Crowdsale {
   
   //Invoice -used for non-ether presale token generation
   address[] public invoiceMapKeys;
-  mapping(address => InvestorConditions) public invoicesMap;
+  mapping(address => uint256) public invoicesMap;
   
   mapping(address => bool) public kykPassed;
   
@@ -199,18 +186,18 @@ contract PreSaleCrowdsale is Crowdsale {
     require(_wallet != address(0));
     require(_tokens > 0);
   
-    InvestorConditions storage invoice = invoicesMap[_wallet];
+    uint256 amount = invoicesMap[_wallet];
+    
     // Adding new key if not present:
-    if (invoice.wallet == address(0)) {
+    if (amount == 0) {
       invoiceMapKeys.push(_wallet);
       emit InvoiceAdded(_wallet, _tokens, _invoiceId);
     }
     else {
       emit InvoiceUpdated(_wallet, _tokens, _invoiceId);
     }
-  
-    invoice.wallet = _wallet;
-    invoice.tokens = _tokens;
+    
+    invoicesMap[_wallet] = _tokens;
   }
   
   /**
@@ -220,7 +207,7 @@ contract PreSaleCrowdsale is Crowdsale {
    */
   function deleteInvoice(address _wallet) external onlyAdmins onlyWhileOpen {
     require(_wallet != address(0));
-    require(invoicesMap[_wallet].wallet != address(0));
+    require(invoicesMap[_wallet] > 0);
     
     //delete from the map:
     delete invoicesMap[_wallet];
