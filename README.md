@@ -10,8 +10,16 @@ First install truffle and initialize your project with `npm install`.
 
 ```sh
 npm install -g truffle
-npm install 
+npm install -g ganache-cli
 ```
+
+To use test network start ganache-cli in console with params like this
+ganache-cli.cmd -p 8555 -g 1 -l 10000000000000
+
+After this start truffle in another console
+truffle console
+
+You would be switched to development network. Now you are able to deploy contracts.
 
 ## The Crowdsale Specification
 * ONE token is ERC-20 compliant.

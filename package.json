@@ -34,18 +34,22 @@
   },
   "homepage": "https://github.com/ProtocolONE/token_one/Tokens#readme",
   "dependencies": {
+    "babel": "^6.23.0",
+    "bignumber.js": "^7.2.1",
     "openzeppelin-solidity": "1.10.0",
+    "sha3": "^1.2.2",
     "truffle": "4.1.5",
-    "truffle-hdwallet-provider": "0.0.3",
-    "bignumber.js": "^7.2.1"
+    "truffle-hdwallet-provider": "0.0.3"
   },
   "devDependencies": {
-    "coveralls": "3.0.0",
+    "babel-cli": "^6.26.0",
     "babel-polyfill": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
     "babel-preset-es2015": "^6.24.1",
     "babel-preset-stage-2": "^6.24.1",
     "babel-preset-stage-3": "^6.24.1",
     "babel-register": "^6.26.0",
+    "coveralls": "3.0.0",
     "eslint": "4.13.1",
     "eslint-config-airbnb": "16.1.0",
     "eslint-plugin-import": "2.8.0",

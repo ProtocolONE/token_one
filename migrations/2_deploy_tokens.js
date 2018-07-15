@@ -14,18 +14,17 @@ module.exports = function (deployer, network, accounts) {
   const walletFounders = accounts[3]; 
   const walletReserve = accounts[4];
 
-  const cap = new web3.BigNumber(1000);
-  const goal = new web3.BigNumber(1001);
+  const softcap = new web3.BigNumber(1000);
+  const hardcap = new web3.BigNumber(2000);
 
-  return deployer.then(() => deployer.deploy(OneCoin)).then(() => deployer.deploy(OneCrowdsale, 
-                                                                                  openingTime, 
-                                                                                  closingTime, 
-                                                                                  rate, 
+return deployer.then(() => deployer.deploy(OneCoin, wallet, {gas: 100000000})).then(() => deployer.deploy(OneCrowdsale,
+                                                                                  wallet, 
                                                                                   walletTeam,
                                                                                   walletAdvisers,
                                                                                   walletFounders,
                                                                                   walletReserve,
-                                                                                  cap,
-                                                                                  goal, 
-                                                                                  OneCoin.address));
+                                                                                  openingTime, 
+                                                                                  closingTime, 
+                                                                                  softcap,
+                                                                                  hardcap, {gas: 100000000}));
 };
