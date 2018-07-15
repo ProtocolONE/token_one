@@ -7,7 +7,7 @@ contract('OneSmartToken', function(accounts) {
     let token;
 
     beforeEach(async function() {
-        token = await MintableToken.new();
+        token = await MintableToken.new(accounts[0]);
     });
 
     it('should start with a totalSupply of 0', async function() {
