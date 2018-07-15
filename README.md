@@ -21,6 +21,13 @@ truffle console
 
 You would be switched to development network. Now you are able to deploy contracts.
 
+To run test you should start node with 
+ganache-cli.cmd -p 8555 -g 1 -l 10000000000000
+
+Then in another console
+truffle console
+test
+
 ## The Crowdsale Specification
 * ONE token is ERC-20 compliant.
 * Token allocation:
