@@ -13,7 +13,6 @@
     "lint:sol": "solhint contracts/*.sol contracts/*/*.sol test/*.sol test/*/*.sol",
     "lint": "npm run lint:js && npm run lint:sol",
     "publish": "truffle publish",
-    "pretest": "npm run lint",
     "test": "truffle test",
     "coverage": "solidity-coverage",
     "ganache": "./node_modules/.bin/ganache-cli.cmd -p 8555 -g 1 -l 10000000000000"

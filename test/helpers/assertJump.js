@@ -1,4 +1,4 @@
-export default async promise => {
+export default async (promise) => {
   try {
     await promise;
     assert.fail('Expected invalid opcode not received');
