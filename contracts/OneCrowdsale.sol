@@ -314,7 +314,7 @@ function assignDepositTimeLock(
    *
    * @param _wallet the address of the investor wallet for ETC payments.
    */
-  function refundDeposit(address _wallet) external onlyAdmins onlyKYCNotPassed {
+  function refundDeposit(address _wallet) external onlyAdmins {
     DealDeposit storage deposit = depositMap[_wallet];
     require(deposit.depositedTokens > 0);
     
