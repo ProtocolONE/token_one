@@ -15,24 +15,25 @@
     "publish": "truffle publish",
     "pretest": "npm run lint",
     "test": "truffle test",
-    "coverage": "solidity-coverage"
+    "coverage": "solidity-coverage",
+    "ganache": "ganache-cli.cmd -p 8555 -g 1 -l 10000000000000"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ConsenSys/Tokens.git"
+    "url": "git+https://github.com/ProtocolONE/token_one.git"
   },
   "keywords": [
     "ethereum"
   ],
   "authors": [
-    "Simon de la Rouviere <simon.delarouviere@consensys.net>",
-    "Joseph Chow <joseph.chow@consensys.net>"
+    "Kirill Vostretsov <kirill.vostretsov@protocol.one>",
+    "Nikolay Bondarenko <nikolay.bondarenko@protocol.one>"
   ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/ProtocolONE/token_one/issues"
   },
-  "homepage": "https://github.com/ProtocolONE/token_one/Tokens#readme",
+  "homepage": "https://github.com/ProtocolONE/token_one",
   "dependencies": {
     "babel": "^6.23.0",
     "bignumber.js": "^7.2.1",
