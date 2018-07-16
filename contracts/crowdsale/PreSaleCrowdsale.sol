@@ -82,8 +82,10 @@ contract PreSaleCrowdsale is Crowdsale {
     require(_wallet != address(0));
     require(kykPassed[_wallet] != _value);
     
-    emit KYCUpdated(_wallet, kykPassed[_wallet], _value);
+    bool _oldValue = kykPassed[_wallet];
     kykPassed[_wallet] = _value;
+  
+    emit KYCUpdated(_wallet, _oldValue, _value);
   }
   
   /**
