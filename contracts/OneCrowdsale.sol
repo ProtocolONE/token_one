@@ -95,7 +95,6 @@ contract OneCrowdsale is PreSaleCrowdsale {
   event CrowdsakeFinished();
   event TokenLocked();
   event TokenUnlocked();
- 
   
   /***********************************************************************/
   /**                              Members
@@ -406,9 +405,16 @@ contract OneCrowdsale is PreSaleCrowdsale {
    * @return the rate in ONE per 1 ETH.
    */
   function getRate() public view returns (uint256) {
-    //UNDONE final rate table
-    if (now < (openingTime.add(1 days))) {return 1000;}
-    if (now < (openingTime.add(30 days))) {return 550;}
+    if (now < (openingTime.add(33 days))) {return rate.mul(160).div(100);} //60%
+    if (now < (openingTime.add(61 days))) {return rate.mul(150).div(100);} //50%
+    if (now < (openingTime.add(115 days))) {return rate.mul(140).div(100);} //40%
+    if (now < (openingTime.add(145 days))) {return rate.mul(130).div(100);} //30%
+    if (now < (openingTime.add(208 days))) {return rate.mul(120).div(100);} //20%
+    if (now < (openingTime.add(212 days))) {return rate.mul(110).div(100);} //10%
+    if (now < (openingTime.add(216 days))) {return rate.mul(108).div(100);} //8%
+    if (now < (openingTime.add(220 days))) {return rate.mul(106).div(100);} //6%
+    if (now < (openingTime.add(224 days))) {return rate.mul(104).div(100);} //4%
+    if (now < (openingTime.add(228 days))) {return rate.mul(102).div(100);} //2%
     
     return rate;
   }
