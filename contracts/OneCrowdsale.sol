@@ -180,11 +180,10 @@ contract OneCrowdsale is PreSaleCrowdsale {
     uint256 bonusTokens = 0;
     uint256 bonusRate = getBonusRate(_beneficiary);
     if (bonusRate > 0) {
-      
-      bonusTokens = baseDealTokens.mul(bonusRate).div(100);
+      uint256 totalBonusTokens = baseDealTokens.mul(bonusRate).div(100);
       // calculate bonus part in tokens
-      uint256 bonusSharePart = bonusTokens.mul(investorDeal.bonusShare).div(100);
-      uint256 baseDealBonus = bonusTokens.sub(bonusSharePart);
+      uint256 bonusSharePart = totalBonusTokens.mul(investorDeal.bonusShare).div(100);
+      uint256 baseDealBonus = totalBonusTokens.sub(bonusSharePart);
   
       baseDealTokens.add(baseDealBonus);
       bonusTokens = bonusSharePart;
@@ -400,24 +399,6 @@ function assignDepositTimeLock(
   
     emit TokenClaimed(investor, transferable);
   }
-
-  /**
-   * @return the rate in ONE per 1 ETH.
-   */
-  function getRate() public view returns (uint256) {
-    if (now < (openingTime.add(33 days))) {return rate.mul(160).div(100);} //60%
-    if (now < (openingTime.add(61 days))) {return rate.mul(150).div(100);} //50%
-    if (now < (openingTime.add(115 days))) {return rate.mul(140).div(100);} //40%
-    if (now < (openingTime.add(145 days))) {return rate.mul(130).div(100);} //30%
-    if (now < (openingTime.add(208 days))) {return rate.mul(120).div(100);} //20%
-    if (now < (openingTime.add(212 days))) {return rate.mul(110).div(100);} //10%
-    if (now < (openingTime.add(216 days))) {return rate.mul(108).div(100);} //8%
-    if (now < (openingTime.add(220 days))) {return rate.mul(106).div(100);} //6%
-    if (now < (openingTime.add(224 days))) {return rate.mul(104).div(100);} //4%
-    if (now < (openingTime.add(228 days))) {return rate.mul(102).div(100);} //2%
-    
-    return rate;
-  }
   
   /**
    * @param _beneficiary the address of the investor wallet to get current bonus rate.
@@ -429,7 +410,18 @@ function assignDepositTimeLock(
     if (bonusRateTime >= now && bonusRate > 0) {
       return bonusRate;
     }
-    
+  
+    if (now < (openingTime.add(33 days))) {return 60;} //60%
+    if (now < (openingTime.add(61 days))) {return 50;} //50%
+    if (now < (openingTime.add(115 days))) {return 40;} //40%
+    if (now < (openingTime.add(145 days))) {return 30;} //30%
+    if (now < (openingTime.add(208 days))) {return 20;} //20%
+    if (now < (openingTime.add(212 days))) {return 10;} //10%
+    if (now < (openingTime.add(216 days))) {return 8;} //8%
+    if (now < (openingTime.add(220 days))) {return 6;} //6%
+    if (now < (openingTime.add(224 days))) {return 4;} //4%
+    if (now < (openingTime.add(228 days))) {return 2;} //2%
+  
     return 0;
   }
   
