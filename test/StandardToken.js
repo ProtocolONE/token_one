@@ -1,7 +1,11 @@
-
-
 import expectThrow from './helpers/expectThrow';
 import assertJump from './helpers/assertJump';
+
+const BigNumber = web3.BigNumber;
+const should = require('chai')
+    .use(require('chai-as-promised'))
+    .use(require('chai-bignumber')(BigNumber))
+    .should();
 
 const StandardTokenMock = artifacts.require('./helpers/StandardTokenMock.sol');
 
@@ -19,7 +23,7 @@ contract('StandardToken', (accounts) => {
   });
 
   it('should return the correct allowance amount after approval', async () => {
-    const token = await StandardTokenMock.new();
+    const token = await StandardTokenMock.new(accounts[0], 100);
     await token.approve(accounts[1], 100);
     const allowance = await token.allowance(accounts[0], accounts[1]);
 
