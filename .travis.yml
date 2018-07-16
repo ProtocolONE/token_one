@@ -18,4 +18,4 @@ before_script:
 script:
   - npm run lint
   - npm run lint:sol
-  - scripts/test.sh
+  - npm run coverage_travis

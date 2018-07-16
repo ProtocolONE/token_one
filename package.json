@@ -15,6 +15,7 @@
     "publish": "truffle publish",
     "test": "truffle test",
     "coverage": "solidity-coverage",
+    "coverage_travis": "scripts/test.sh",
     "ganache": "./node_modules/.bin/ganache-cli.cmd -p 8555 -g 1 -l 10000000000000"
   },
   "repository": {
