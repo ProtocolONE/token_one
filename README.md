@@ -15,7 +15,6 @@ Please see the [contracts/](contracts) directory.
 * node 8+
 * npm
 * [truffle](http://truffleframework.com/)
-* [geth](https://github.com/ethereum/go-ethereum/wiki/Installation-Instructions-for-Mac) to use as CLI ethereum wallet that truffle can manipulate.
 
 After installing, run `geth account new` to create an account on your node.
 
@@ -37,7 +36,8 @@ truffle test
 * ONE token is ERC-20 compliant.
 * Token allocation:
 	* 59% of the total number of ONE tokens will be allocated to contributors during the token sale.
-	* 12% of the total number of ONE tokens will be allocated to the team and SDK developers.
-	* 15% of the total number of ONE tokens will be allocated to Protocol One founders.
-	* 3% of the total number of ONE tokens will be allocated to professional fees and bounties.
-	* 10% of the total number of ONE tokens will be allocated to Protocol One, and as a reserve for the company to be used for future strategic plans for the created ecosystem.
+	* 17% of the total supply for future strategic plans for the created ecosystem
+	* 12% of the total supply for the team and SDK developers
+	* 8% of the total supply for Protocol One crowdsale campaign
+	* 3% of the total supply for professional fees and Bounties
+	* 1% of the total supply for bounty program
