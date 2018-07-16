@@ -1,5 +1,5 @@
 # Protocol One ERC-20 Token
-[![Build Status](https://img.shields.io/travis/ProtocolONE/token_one.svg?branch=master&style=flat-square)](https://travis-ci.org/ProtocolONE/token_one)
+[![Build Status](https://travis-ci.org/ProtocolONE/token_one.svg?branch=master)](https://travis-ci.org/ProtocolONE/token_one)
 [![Coverage Status](https://img.shields.io/coveralls/github/ProtocolONE/token_one/master.svg?style=flat-square)](https://coveralls.io/github/ProtocolONE/token_one?branch=master)
 
 This project contains the smart contracts that govern the [Protocol One](https://protocol.one/) token.
