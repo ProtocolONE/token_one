@@ -1,4 +1,4 @@
-const assertJump = require('./helpers/assertJump');
+import assertJump from './helpers/assertJump';
 
 let BasicTokenMock = artifacts.require("./helpers/BasicTokenMock.sol");
 
