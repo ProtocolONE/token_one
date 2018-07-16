@@ -6,6 +6,7 @@ import "./OneSmartToken.sol";
 
 /*
 Чек лист:
+- в депозитах мы должны работать с кошельком получателя (не платильщика как сейчас)
 - добавить вестинг на команду - перечисляется на кошелек по расписанию.
 */
 
@@ -112,7 +113,8 @@ contract OneCrowdsale is PreSaleCrowdsale {
   address public walletAdvisers;
   address public walletFounders;
   address public walletReserve;
-
+  
+  address[] public depositMapKeys;
   mapping(address => DealDeposit) public depositMap;
   mapping(address => DepositTimeLock) public depositTimeLockMap;
   
@@ -236,7 +238,7 @@ contract OneCrowdsale is PreSaleCrowdsale {
   function addDeposit(
     address _incomeWallet,
     address _wallet,
-    address _bonusWaller,
+    address _bonusWallet,
     uint256 _wei,
     uint256 _tokens,
     uint256 _bonusTokens
@@ -248,15 +250,19 @@ contract OneCrowdsale is PreSaleCrowdsale {
     require(_tokens > 0);
     
     DealDeposit storage deposit = depositMap[_incomeWallet];
+    if (deposit.investorWallet == address(0)) {
+      depositMapKeys.push(_incomeWallet);
+    }
+    
     deposit.investorWallet = _wallet;
-    deposit.bonusWallet = _bonusWaller;
+    deposit.bonusWallet = _bonusWallet;
     deposit.depositedETH.add(_wei);
     deposit.depositedTokens.add(_tokens);
     deposit.depositedBonusTokens.add(_bonusTokens);
-  
+    
     ONE.mint(address(this), _tokens.add(_bonusTokens)); //UNDONE
     
-    emit DepositAdded(_wallet, _bonusWaller, _wei, _tokens, _bonusTokens);
+    emit DepositAdded(_wallet, _bonusWallet, _wei, _tokens, _bonusTokens);
   }
 
   /**
@@ -286,7 +292,7 @@ contract OneCrowdsale is PreSaleCrowdsale {
    *     Crowdsale    main cliff      additional cliff
    *      finish
    */
-  function assignDepositTimeLock(
+function assignDepositTimeLock(
     address _wallet,
     uint256 _mainCliffAmount,
     uint256 _mainCliffTime,
@@ -359,22 +365,16 @@ contract OneCrowdsale is PreSaleCrowdsale {
    */
   function claimTokens() public onlyKYCPassed {
     address investor = msg.sender;
+  
     DealDeposit storage deposit = depositMap[investor];
-    
+  
     require(deposit.depositedTokens > 0);
-    
+  
     uint256 depositedToken = deposit.depositedTokens;
     address investorWallet = deposit.investorWallet;
-    
-    if (deposit.depositedBonusTokens > 0) {
-      deposit.depositedBonusTokens = 0;
-      ONE.transfer(deposit.bonusWallet, deposit.depositedBonusTokens);
-      
-      emit TokenClaimed(deposit.bonusWallet, deposit.depositedBonusTokens);
-    }
   
     DepositTimeLock storage timeLock = depositTimeLockMap[investor];
-    
+  
     uint256 vested;
     if (timeLock.mainCliffTime > 0 && timeLock.mainCliffTime <= now) {
       vested = depositedToken.mul(timeLock.mainCliffAmount).div(100);
@@ -388,7 +388,7 @@ contract OneCrowdsale is PreSaleCrowdsale {
     if (vested == 0) {
       return;
     }
-    
+  
     // Make sure the holder doesn't transfer more than what he already has.
     uint256 transferable = vested.sub(deposit.transferred);
     if (transferable == 0) {
@@ -397,10 +397,10 @@ contract OneCrowdsale is PreSaleCrowdsale {
   
     deposit.transferred = deposit.transferred.add(transferable);
     ONE.transfer(investorWallet, transferable);
-    
+  
     emit TokenClaimed(investor, transferable);
   }
-  
+
   /**
    * @return the rate in ONE per 1 ETH.
    */
@@ -444,8 +444,20 @@ contract OneCrowdsale is PreSaleCrowdsale {
     for (uint256 i = 0; i < invoiceMapKeys.length; i++) {
       address investorWallet = invoiceMapKeys[i];
       uint256 tokens = invoicesMap[investorWallet];
-    
+      
       addDeposit(investorWallet, investorWallet, address(0), 0, tokens, 0);
+    }
+  
+    // Transfer all bonus tokens (not depends on KYC)
+    for (uint256 i = 0; i < depositMapKeys.length; i++) {
+      DealDeposit storage deposit = depositMap[depositMapKeys[i]];
+ 
+      if (deposit.depositedBonusTokens > 0) {
+        deposit.depositedBonusTokens = 0;
+        ONE.transfer(deposit.bonusWallet, deposit.depositedBonusTokens);
+    
+        emit TokenClaimed(deposit.bonusWallet, deposit.depositedBonusTokens);
+      }
     }
   
     uint256 newTotalSupply = ONE.totalSupply().mul(100).div(icoPart);
