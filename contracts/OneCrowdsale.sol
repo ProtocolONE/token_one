@@ -3,9 +3,9 @@ pragma solidity ^0.4.19;
 import "./crowdsale/PreSaleCrowdsale.sol";
 import "./math/SafeMath.sol";
 import "./OneSmartToken.sol";
+
 /*
 Чек лист:
-- везде добавить события
 - добавить вестинг на команду - перечисляется на кошелек по расписанию.
 */
 
@@ -49,6 +49,10 @@ contract OneCrowdsale is PreSaleCrowdsale {
     uint256 additionalCliffAmount;
   }
   
+  /***********************************************************************/
+  /**                              Events
+  /***********************************************************************/
+
   event DepositAdded(
     address indexed beneficiary,
     address indexed bonusBeneficiary,
@@ -57,9 +61,18 @@ contract OneCrowdsale is PreSaleCrowdsale {
     uint256 bonusAmount
   );
   
-  event RefundedDeposit(address indexed beneficiary, uint256 value, uint256 amount);
+  event DepositTimeLockAssigned(
+    address indexed _wallet,
+    uint256 _mainCliffAmount,
+    uint256 _mainCliffTime,
+    uint256 _additionalCliffAmount,
+    uint256 _additionalCliffTime
+  );
   
-  event Finalized();
+  event DepositTimeLockDeleted(address indexed _wallet);
+  
+  event RefundedDeposit(address indexed beneficiary, uint256 value, uint256 amount);
+  event TokenClaimed(address indexed _wallet, uint256 value);
   
   /**
    * Event for token purchase logging
@@ -70,7 +83,7 @@ contract OneCrowdsale is PreSaleCrowdsale {
    * @param amount amount of tokens purchased
    * @param bonusAmount amount of bonus tokens purchased
    */
-  event TokenPurchase(
+  event TokenPurchased(
     address indexed purchaser,
     address indexed beneficiary,
     address indexed bonusBeneficiary,
@@ -79,6 +92,10 @@ contract OneCrowdsale is PreSaleCrowdsale {
     uint256 bonusAmount
   );
   
+  event CrowdsakeFinished();
+  event TokenLocked();
+  event TokenUnlocked();
+ 
   
   /***********************************************************************/
   /**                              Members
@@ -186,7 +203,7 @@ contract OneCrowdsale is PreSaleCrowdsale {
     investorDeal.completed = true;
     forwardFunds();
     
-    emit TokenPurchase(_beneficiary, investorDeal.investorWallet, investorDeal.bonusWallet, weiAmount, baseDealTokens, bonusTokens);
+    emit TokenPurchased(_beneficiary, investorDeal.investorWallet, investorDeal.bonusWallet, weiAmount, baseDealTokens, bonusTokens);
   }
   
   /**
@@ -194,6 +211,8 @@ contract OneCrowdsale is PreSaleCrowdsale {
    */
   function lockTokens() external onlyOwner {
     ONE.lock();
+    
+    emit TokenLocked();
   }
   
   /**
@@ -201,10 +220,19 @@ contract OneCrowdsale is PreSaleCrowdsale {
    */
   function unlockTokens() external onlyOwner {
     ONE.unlock();
+    
+    emit TokenUnlocked();
   }
-  
+
   /**
-   * UNDONE
+   * @dev Add internal deposit record before actual token distribution.
+   *
+   * @param _incomeWallet who paid for the tokens
+   * @param _wallet who got the tokens
+   * @param _bonusWaller who got the bonus tokens
+   * @param _wei weis paid for purchase
+   * @param _tokens amount of tokens purchased
+   * @param _bonusTokens amount of bonus tokens purchased
    */
   function addDeposit(
     address _incomeWallet,
@@ -232,12 +260,39 @@ contract OneCrowdsale is PreSaleCrowdsale {
     emit DepositAdded(_wallet, _bonusWaller, _wei, _tokens, _bonusTokens);
   }
 
+  /**
+   * @dev Add deposit time lock for given wallet.
+   *
+   * @param _wallet address of wallet to got the tokens
+   * @param _mainCliffAmount percent of token could taken before mainCliffTime
+   * @param _mainCliffTime timestamp for main cliff
+   * @param _additionalCliffAmount percent of token could taken before _additionalCliffTime
+   * @param _additionalCliffTime timestamp for additional cliff
+   *
+   *
+   *   |                                    /----------------
+   *   |                                    |  all remaining
+   *   |                                    |     tokens
+   *   |                                    |
+   *   |                                    |
+   *   |                                    |
+   *   |               /---------------------
+   *   |               |  + additional cliff
+   *   |               |        amount
+   *   |   /-----------/
+   *   |   |
+   *   |   |  main cliff
+   *   |   |    amount
+   *   +===+===========+--------------------+-------------------> time
+   *     Crowdsale    main cliff      additional cliff
+   *      finish
+   */
   function assignDepositTimeLock(
     address _wallet,
     uint256 _mainCliffAmount,
     uint256 _mainCliffTime,
-    uint256 _additionalCliffTime,
-    uint256 _additionalCliffAmount
+    uint256 _additionalCliffAmount,
+    uint256 _additionalCliffTime
   )
     external onlyAdmins onlyWhileOpen
   {
@@ -255,12 +310,21 @@ contract OneCrowdsale is PreSaleCrowdsale {
     timeLock.mainCliffTime = _mainCliffTime;
     timeLock.additionalCliffTime = _additionalCliffTime;
     timeLock.additionalCliffAmount = _additionalCliffAmount;
+    
+    emit DepositTimeLockAssigned(_wallet, _mainCliffAmount, _mainCliffTime, _additionalCliffAmount, _additionalCliffTime);
   }
-  
-  function deleteDepositTimeLock( address _wallet) external onlyAdmins onlyWhileOpen {
+
+  /**
+   * @dev Remove deposit time lock
+   *
+   * @param _wallet address of wallet to got the tokens
+   */
+  function deleteDepositTimeLock(address _wallet) external onlyAdmins onlyWhileOpen {
     require(_wallet != address(0));
     
     delete depositTimeLockMap[_wallet];
+
+    emit DepositTimeLockDeleted(_wallet);
   }
   
   /**
@@ -306,18 +370,20 @@ contract OneCrowdsale is PreSaleCrowdsale {
     if (deposit.depositedBonusTokens > 0) {
       deposit.depositedBonusTokens = 0;
       ONE.transfer(deposit.bonusWallet, deposit.depositedBonusTokens);
+      
+      emit TokenClaimed(deposit.bonusWallet, deposit.depositedBonusTokens);
     }
   
     DepositTimeLock storage timeLock = depositTimeLockMap[investor];
     
     uint256 vested;
     if (timeLock.mainCliffTime > 0 && timeLock.mainCliffTime <= now) {
-      vested = deposit.depositedTokens.mul(timeLock.mainCliffAmount).div(100);
+      vested = depositedToken.mul(timeLock.mainCliffAmount).div(100);
     } else if (timeLock.additionalCliffTime > 0 && timeLock.additionalCliffTime <= now) {
       uint256 totalCliff = timeLock.mainCliffAmount.add(timeLock.additionalCliffAmount);
-      vested = deposit.depositedTokens.mul(totalCliff).div(100);
+      vested = depositedToken.mul(totalCliff).div(100);
     } else {
-      vested = deposit.depositedTokens;
+      vested = depositedToken;
     }
   
     if (vested == 0) {
@@ -331,7 +397,9 @@ contract OneCrowdsale is PreSaleCrowdsale {
     }
   
     deposit.transferred = deposit.transferred.add(transferable);
-    ONE.transfer(investorWallet, depositedToken);
+    ONE.transfer(investorWallet, transferable);
+    
+    emit TokenClaimed(investor, transferable);
   }
   
   /**
@@ -383,7 +451,7 @@ contract OneCrowdsale is PreSaleCrowdsale {
     
     ONE.finishMinting();
     
-    emit Finalized();
+    emit CrowdsakeFinished();
     isFinalized = true;
   }
   
