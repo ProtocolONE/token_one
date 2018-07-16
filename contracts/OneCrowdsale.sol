@@ -92,17 +92,19 @@ contract OneCrowdsale is PreSaleCrowdsale {
   /***********************************************************************/
   bool public isFinalized = false;
   
+  uint256 constant reservePart = 17; // 17% of the total supply for future strategic plans for the created ecosystem
   uint256 constant teamPart = 12; // 12% of the total supply for the team and SDK developers
+  uint256 constant operatingPart = 8; // 8% of the total supply for Protocol One crowdsale campaign
   uint256 constant advisersPart = 3; // 3% of the total supply for professional fees and Bounties
-  uint256 constant foundersPart = 15; // 15% of the total supply for Protocol One founders
-  uint256 constant reservePart = 10; // 10% of the total supply for future strategic plans for the created ecosystem
+  uint256 constant bountyPart = 1; // 1% of the total supply for bounty program
   uint256 constant icoPart = 59; // 59% of total supply for public and private offers
 
   address public wallet; // Address where funds are collected
   address public walletTeam;
   address public walletAdvisers;
-  address public walletFounders;
+  address public walletOperating;
   address public walletReserve;
+  address public walletBounty;
   
   mapping(address => DealDeposit) public depositMap;
   mapping(address => DepositTimeLock) public depositTimeLockMap;
@@ -114,8 +116,9 @@ contract OneCrowdsale is PreSaleCrowdsale {
     address _wallet,
     address _walletTeam,
     address _walletAdvisers,
-    address _walletFounders,
+    address _walletOperating,
     address _walletReserve,
+    address _walletBounty,
     uint256 _openingTime,
     uint256 _closingTime,
     uint256 _softCap,
@@ -127,14 +130,16 @@ contract OneCrowdsale is PreSaleCrowdsale {
     require(_wallet != address(0));
     require(_walletTeam != address(0));
     require(_walletAdvisers != address(0));
-    require(_walletFounders != address(0));
+    require(_walletOperating != address(0));
     require(_walletReserve != address(0));
+    require(_walletBounty != address(0));
     
     wallet = _wallet;
     walletTeam = _walletTeam;
     walletAdvisers = _walletAdvisers;
-    walletFounders = _walletFounders;
+    walletOperating = _walletOperating;
     walletReserve = _walletReserve;
+    walletBounty = _walletBounty;
   }
   
   /***********************************************************************/
@@ -413,8 +418,9 @@ function assignDepositTimeLock(
   
     ONE.mint(walletTeam, newTotalSupply.mul(teamPart).div(100));
     ONE.mint(walletAdvisers, newTotalSupply.mul(advisersPart).div(100));
-    ONE.mint(walletFounders, newTotalSupply.mul(foundersPart).div(100));
+    ONE.mint(walletOperating, newTotalSupply.mul(operatingPart).div(100));
     ONE.mint(walletReserve, newTotalSupply.mul(reservePart).div(100));
+    ONE.mint(walletBounty, newTotalSupply.mul(bountyPart).div(100));
     
     ONE.finishMinting();
     
