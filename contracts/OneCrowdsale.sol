@@ -4,12 +4,6 @@ import "./crowdsale/PreSaleCrowdsale.sol";
 import "./math/SafeMath.sol";
 import "./OneSmartToken.sol";
 
-/*
-Чек лист:
-- добавить вестинг на команду - перечисляется на кошелек по расписанию.
-*/
-
-
 /**
 * In 2018 and in real world a huge amount of conditions required to success processing
 * private round investments.
@@ -34,7 +28,7 @@ contract OneCrowdsale is PreSaleCrowdsale {
   uint256 public constant MIN_INVOICE_LENGTH = 5;
 
   struct DealDeposit{
-    address investorWallet;
+    address refundWallet;
     address bonusWallet;
     uint256 depositedETH;
     uint256 depositedTokens;
@@ -54,11 +48,10 @@ contract OneCrowdsale is PreSaleCrowdsale {
   /***********************************************************************/
 
   event DepositAdded(
-    address indexed beneficiary,
-    address indexed bonusBeneficiary,
+    address indexed wallet,
+    address indexed refundWallet,
     uint256 value,
-    uint256 amount,
-    uint256 bonusAmount
+    uint256 amount
   );
   
   event DepositTimeLockAssigned(
@@ -95,7 +88,6 @@ contract OneCrowdsale is PreSaleCrowdsale {
   event CrowdsakeFinished();
   event TokenLocked();
   event TokenUnlocked();
- 
   
   /***********************************************************************/
   /**                              Members
@@ -113,7 +105,7 @@ contract OneCrowdsale is PreSaleCrowdsale {
   address public walletAdvisers;
   address public walletFounders;
   address public walletReserve;
-
+  
   mapping(address => DealDeposit) public depositMap;
   mapping(address => DepositTimeLock) public depositTimeLockMap;
   
@@ -179,26 +171,19 @@ contract OneCrowdsale is PreSaleCrowdsale {
     uint256 bonusTokens = 0;
     uint256 bonusRate = getBonusRate(_beneficiary);
     if (bonusRate > 0) {
-      
-      bonusTokens = baseDealTokens.mul(bonusRate).div(100);
+      uint256 totalBonusTokens = baseDealTokens.mul(bonusRate).div(100);
       // calculate bonus part in tokens
-      uint256 bonusSharePart = bonusTokens.mul(investorDeal.bonusShare).div(100);
-      uint256 baseDealBonus = bonusTokens.sub(bonusSharePart);
-  
-      baseDealTokens.add(baseDealBonus);
-      bonusTokens = bonusSharePart;
+      bonusTokens = totalBonusTokens.mul(investorDeal.bonusShare).div(100);
+      baseDealTokens.add(totalBonusTokens.sub(bonusTokens));
     }
   
     weiRaised = weiRaised.add(weiAmount);
     
-    addDeposit(
-      _beneficiary,
-      investorDeal.investorWallet,
-      investorDeal.bonusWallet,
-      weiAmount,
-      baseDealTokens,
-      bonusTokens
-    );
+    addDeposit(_beneficiary, investorDeal.investorWallet, weiAmount, baseDealTokens);
+    
+    if (bonusTokens > 0) {
+      addDeposit(_beneficiary, investorDeal.bonusWallet, 0, bonusTokens);
+    }
   
     investorDeal.completed = true;
     forwardFunds();
@@ -227,37 +212,31 @@ contract OneCrowdsale is PreSaleCrowdsale {
   /**
    * @dev Add internal deposit record before actual token distribution.
    *
-   * @param _incomeWallet who paid for the tokens
+   * @param _refundWallet who paid for the tokens
    * @param _wallet who got the tokens
-   * @param _bonusWaller who got the bonus tokens
    * @param _wei weis paid for purchase
    * @param _tokens amount of tokens purchased
-   * @param _bonusTokens amount of bonus tokens purchased
    */
   function addDeposit(
-    address _incomeWallet,
+    address _refundWallet,
     address _wallet,
-    address _bonusWaller,
     uint256 _wei,
-    uint256 _tokens,
-    uint256 _bonusTokens
+    uint256 _tokens
   )
     internal
   {
-    require(_incomeWallet != address(0));
+    require(_refundWallet != address(0));
     require(_wallet != address(0));
     require(_tokens > 0);
     
-    DealDeposit storage deposit = depositMap[_incomeWallet];
-    deposit.investorWallet = _wallet;
-    deposit.bonusWallet = _bonusWaller;
+    DealDeposit storage deposit = depositMap[_wallet];
+    deposit.refundWallet = _refundWallet;
     deposit.depositedETH.add(_wei);
     deposit.depositedTokens.add(_tokens);
-    deposit.depositedBonusTokens.add(_bonusTokens);
-  
-    ONE.mint(address(this), _tokens.add(_bonusTokens)); //UNDONE
     
-    emit DepositAdded(_wallet, _bonusWaller, _wei, _tokens, _bonusTokens);
+    ONE.mint(address(this), _tokens.add(_tokens)); //UNDONE
+    
+    emit DepositAdded(_wallet, _refundWallet, _wei, _tokens);
   }
 
   /**
@@ -287,7 +266,7 @@ contract OneCrowdsale is PreSaleCrowdsale {
    *     Crowdsale    main cliff      additional cliff
    *      finish
    */
-  function assignDepositTimeLock(
+function assignDepositTimeLock(
     address _wallet,
     uint256 _mainCliffAmount,
     uint256 _mainCliffTime,
@@ -333,23 +312,20 @@ contract OneCrowdsale is PreSaleCrowdsale {
    * @param _wallet the address of the investor wallet for ETC payments.
    */
   function refundDeposit(address _wallet) external onlyAdmins onlyKYCNotPassed {
-    require(depositMap[_wallet].depositedTokens > 0);
+    DealDeposit storage deposit = depositMap[_wallet];
+    require(deposit.depositedTokens > 0);
     
-    uint256 tokens = depositMap[_wallet].depositedTokens;
-    uint256 bonusTokens = depositMap[_wallet].depositedBonusTokens;
-    uint256 refundTokens = tokens.add(bonusTokens);
-  
+    uint256 refundTokens = deposit.depositedTokens;
     require(refundTokens > 0);
-    
-    depositMap[_wallet].depositedTokens = 0;
-    depositMap[_wallet].depositedBonusTokens = 0;
+  
+    deposit.depositedTokens = 0;
     
     ONE.burn(address(this), refundTokens);
 
-    uint256 ETHToRefund = depositMap[_wallet].depositedETH;
+    uint256 ETHToRefund = deposit.depositedETH;
     if (ETHToRefund > 0) {
-      depositMap[_wallet].depositedETH = 0;
-      _wallet.transfer(ETHToRefund);
+      deposit.depositedETH = 0;
+      deposit.refundWallet.transfer(ETHToRefund);
     }
   
     emit RefundedDeposit(_wallet, ETHToRefund, refundTokens);
@@ -360,22 +336,15 @@ contract OneCrowdsale is PreSaleCrowdsale {
    */
   function claimTokens() public onlyKYCPassed {
     address investor = msg.sender;
+  
     DealDeposit storage deposit = depositMap[investor];
-    
+  
     require(deposit.depositedTokens > 0);
-    
-    uint256 depositedToken = deposit.depositedTokens;
-    address investorWallet = deposit.investorWallet;
-    
-    if (deposit.depositedBonusTokens > 0) {
-      deposit.depositedBonusTokens = 0;
-      ONE.transfer(deposit.bonusWallet, deposit.depositedBonusTokens);
-      
-      emit TokenClaimed(deposit.bonusWallet, deposit.depositedBonusTokens);
-    }
   
     DepositTimeLock storage timeLock = depositTimeLockMap[investor];
     
+    uint256 depositedToken = deposit.depositedTokens;
+  
     uint256 vested;
     if (timeLock.mainCliffTime > 0 && timeLock.mainCliffTime <= now) {
       vested = depositedToken.mul(timeLock.mainCliffAmount).div(100);
@@ -389,7 +358,7 @@ contract OneCrowdsale is PreSaleCrowdsale {
     if (vested == 0) {
       return;
     }
-    
+  
     // Make sure the holder doesn't transfer more than what he already has.
     uint256 transferable = vested.sub(deposit.transferred);
     if (transferable == 0) {
@@ -397,20 +366,9 @@ contract OneCrowdsale is PreSaleCrowdsale {
     }
   
     deposit.transferred = deposit.transferred.add(transferable);
-    ONE.transfer(investorWallet, transferable);
-    
-    emit TokenClaimed(investor, transferable);
-  }
+    ONE.transfer(investor, transferable);
   
-  /**
-   * @return the rate in ONE per 1 ETH.
-   */
-  function getRate() public view returns (uint256) {
-    //UNDONE final rate table
-    if (now < (openingTime.add(1 days))) {return 1000;}
-    if (now < (openingTime.add(30 days))) {return 550;}
-    
-    return rate;
+    emit TokenClaimed(investor, transferable);
   }
   
   /**
@@ -423,7 +381,18 @@ contract OneCrowdsale is PreSaleCrowdsale {
     if (bonusRateTime >= now && bonusRate > 0) {
       return bonusRate;
     }
-    
+  
+    if (now < (openingTime.add(33 days))) {return 60;} //60%
+    if (now < (openingTime.add(61 days))) {return 50;} //50%
+    if (now < (openingTime.add(115 days))) {return 40;} //40%
+    if (now < (openingTime.add(145 days))) {return 30;} //30%
+    if (now < (openingTime.add(208 days))) {return 20;} //20%
+    if (now < (openingTime.add(212 days))) {return 10;} //10%
+    if (now < (openingTime.add(216 days))) {return 8;} //8%
+    if (now < (openingTime.add(220 days))) {return 6;} //6%
+    if (now < (openingTime.add(224 days))) {return 4;} //4%
+    if (now < (openingTime.add(228 days))) {return 2;} //2%
+  
     return 0;
   }
   
@@ -438,8 +407,8 @@ contract OneCrowdsale is PreSaleCrowdsale {
     for (uint256 i = 0; i < invoiceMapKeys.length; i++) {
       address investorWallet = invoiceMapKeys[i];
       uint256 tokens = invoicesMap[investorWallet];
-    
-      addDeposit(investorWallet, investorWallet, address(0), 0, tokens, 0);
+      
+      addDeposit(investorWallet, investorWallet, 0, tokens);
     }
   
     uint256 newTotalSupply = ONE.totalSupply().mul(100).div(icoPart);
