@@ -11,7 +11,7 @@ const should = require('chai')
     .should();
 
 const Crowdsale = artifacts.require('./helpers/CrowdsaleMock');
-const SirinSmartToken = artifacts.require('SirinSmartToken')
+const SmartToken = artifacts.require('OneSmartToken')
 
 contract('Crowdsale', function([_, investor, wallet, purchaser]) {
     const rate = new BigNumber(1000);
