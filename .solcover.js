@@ -1,4 +1,4 @@
 module.exports = {
-    compileCommand: '../node_modules/.bin/truffle compile',
-    testCommand: '../node_modules/.bin/truffle test --network coverage',
+    compileCommand: 'truffle compile --network coverage',
+    testCommand: 'truffle test --network coverage',
 };
