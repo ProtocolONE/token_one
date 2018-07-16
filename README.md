@@ -12,7 +12,6 @@ Please see the [contracts/](contracts) directory.
 * node 8+
 * npm
 * [truffle](http://truffleframework.com/)
-* [ganache-cli](https://github.com/trufflesuite/ganache-cli)
 * [geth](https://github.com/ethereum/go-ethereum/wiki/Installation-Instructions-for-Mac) to use as CLI ethereum wallet that truffle can manipulate.
 
 After installing, run `geth account new` to create an account on your node.
@@ -22,24 +21,13 @@ After installing, run `geth account new` to create an account on your node.
 First install truffle and initialize your project with `npm install`.
 
 ```sh
+npm install 
 npm install -g truffle
-npm install -g ganache-cli
 ```
-To use test network start ganache-cli in console with params like this
-ganache-cli.cmd -p 8555 -g 1 -l 10000000000000
-
-After this start truffle in another console
-truffle console
-
-You would be switched to development network. Now you are able to deploy contracts.
-
-To run test you should start node with 
-ganache-cli.cmd -p 8555 -g 1 -l 10000000000000
 
 Then in another console
 ```sh
-truffle console
-test
+truffle test
 ```
 
 ## The Crowdsale Specification
