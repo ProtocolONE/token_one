@@ -18,7 +18,7 @@ contract PreSaleCrowdsale is Crowdsale {
   * @see addUpdateDeal for details.
   */
   struct PreSaleConditions  {
-    address investorWallet;
+    address wallet;
     address bonusWallet;
     uint256 weiMinAmount;
     uint256 bonusShare;
@@ -51,7 +51,7 @@ contract PreSaleCrowdsale is Crowdsale {
    * @dev Reverts if beneficiary is not whitelisted. Can be used when extending this contract.
    */
   modifier onlyWhitelisted() {
-    require(investorsMap[msg.sender].investorWallet != address(0));
+    require(investorsMap[msg.sender].wallet != address(0));
     _;
   }
   
@@ -93,7 +93,7 @@ contract PreSaleCrowdsale is Crowdsale {
    * All tokens during pre-sale are allocated to pre-sale, buyers.
    *
    * @param _incomeWallet address The address of the investor wallet for ETC payments.
-   * @param _investorWallet address The address of the investor wallet for ONE tokens.
+   * @param _wallet address The address of the investor wallet for ONE tokens.
    * @param _bonusWallet address The address of the finder for ONE tokens.
    * @param _weiMinAmount minimum amount of ETH for payment.
    * @param _bonusRate ONE to ETH rate for investor
@@ -102,7 +102,7 @@ contract PreSaleCrowdsale is Crowdsale {
    */
   function addUpdatePreSaleDeal(
     address _incomeWallet,
-    address _investorWallet,
+    address _wallet,
     address _bonusWallet,
     uint256 _weiMinAmount,
     uint256 _bonusRate,
@@ -112,7 +112,7 @@ contract PreSaleCrowdsale is Crowdsale {
     external onlyAdmins onlyWhileOpen
   {
     require(_incomeWallet != address(0));
-    require(_investorWallet != address(0));
+    require(_wallet != address(0));
     require(_weiMinAmount > 0);
     
     if (_bonusRate > 0) {
@@ -126,14 +126,14 @@ contract PreSaleCrowdsale is Crowdsale {
   
     PreSaleConditions storage investor = investorsMap[_incomeWallet];
     // Adding new key if not present:
-    if (investor.investorWallet == address(0)) {
-      investorsMapKeys.push(_investorWallet);
+    if (investor.wallet == address(0)) {
+      investorsMapKeys.push(_wallet);
       emit InvestorAdded(_incomeWallet);
     } else {
       emit InvestorUpdated(_incomeWallet);
     }
    
-    investor.investorWallet = _investorWallet;
+    investor.wallet = _wallet;
     investor.weiMinAmount = _weiMinAmount;
     investor.bonusWallet = _bonusWallet;
     investor.bonusRate = _bonusRate;
@@ -148,7 +148,7 @@ contract PreSaleCrowdsale is Crowdsale {
    * @param _incomeWallet address The address of the investor wallet for ETC payments.
    */
   function deletePreSaleDeal(address _incomeWallet) external onlyAdmins onlyWhileOpen {
-    require(investorsMap[_incomeWallet].investorWallet != address(0));
+    require(investorsMap[_incomeWallet].wallet != address(0));
     
     //delete from the map:
     delete investorsMap[_incomeWallet];

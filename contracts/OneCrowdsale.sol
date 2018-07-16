@@ -29,10 +29,8 @@ contract OneCrowdsale is PreSaleCrowdsale {
 
   struct DealDeposit{
     address refundWallet;
-    address bonusWallet;
     uint256 depositedETH;
     uint256 depositedTokens;
-    uint256 depositedBonusTokens;
     uint256 transferred;
   }
   
@@ -158,11 +156,11 @@ contract OneCrowdsale is PreSaleCrowdsale {
   {
     uint256 weiAmount = msg.value;
     
-    PreSaleConditions storage investorDeal = investorsMap[_beneficiary];
+    PreSaleConditions storage deal = investorsMap[_beneficiary];
   
-    require(investorDeal.investorWallet != address(0));
-    require(investorDeal.weiMinAmount <= weiAmount);
-    require(investorDeal.completed == false);
+    require(deal.wallet != address(0));
+    require(deal.weiMinAmount <= weiAmount);
+    require(deal.completed == false);
     
     // calculate token amount to be created based on fixed rate
     uint256 baseDealTokens = weiAmount.mul(rate);
@@ -173,22 +171,22 @@ contract OneCrowdsale is PreSaleCrowdsale {
     if (bonusRate > 0) {
       uint256 totalBonusTokens = baseDealTokens.mul(bonusRate).div(100);
       // calculate bonus part in tokens
-      bonusTokens = totalBonusTokens.mul(investorDeal.bonusShare).div(100);
+      bonusTokens = totalBonusTokens.mul(deal.bonusShare).div(100);
       baseDealTokens.add(totalBonusTokens.sub(bonusTokens));
     }
   
     weiRaised = weiRaised.add(weiAmount);
     
-    addDeposit(_beneficiary, investorDeal.investorWallet, weiAmount, baseDealTokens);
+    addDeposit(_beneficiary, deal.wallet, weiAmount, baseDealTokens);
     
     if (bonusTokens > 0) {
-      addDeposit(_beneficiary, investorDeal.bonusWallet, 0, bonusTokens);
+      addDeposit(_beneficiary, deal.bonusWallet, 0, bonusTokens);
     }
   
-    investorDeal.completed = true;
+    deal.completed = true;
     forwardFunds();
     
-    emit TokenPurchased(_beneficiary, investorDeal.investorWallet, investorDeal.bonusWallet, weiAmount, baseDealTokens, bonusTokens);
+    emit TokenPurchased(_beneficiary, deal.wallet, deal.bonusWallet, weiAmount, baseDealTokens, bonusTokens);
   }
   
   /**
