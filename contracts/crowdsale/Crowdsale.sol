@@ -62,7 +62,7 @@ contract Crowdsale is Administrable {
   }
   
   modifier hardCapNotReached() {
-    require(weiRaised.add(msg.value) <= hardCap);
+    require(weiRaised.add(msg.value) < hardCap);
     _;
   }
 
