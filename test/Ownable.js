@@ -1,5 +1,6 @@
 'use strict';
-const assertJump = require('./helpers/assertJump');
+
+import assertJump from './helpers/assertJump';
 
 var Ownable = artifacts.require('../contracts/ownership/Ownable.sol');
 

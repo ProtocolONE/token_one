@@ -1,7 +1,8 @@
 'use strict';
 
-const assertJump = require('./helpers/assertJump');
-const expectThrow = require('./helpers/expectThrow');
+import expectThrow from './helpers/expectThrow';
+import assertJump from './helpers/assertJump';
+
 var StandardTokenMock = artifacts.require('./helpers/StandardTokenMock.sol');
 
 contract('StandardToken', function(accounts) {
