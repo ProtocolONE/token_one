@@ -338,6 +338,8 @@ function assignDepositTimeLock(
    * @dev Investor should call this method to claim they tokens from deposit
    */
   function claimTokens() public onlyKYCPassed {
+    require(isFinalized);
+    
     address investor = msg.sender;
   
     DealDeposit storage deposit = depositMap[investor];
