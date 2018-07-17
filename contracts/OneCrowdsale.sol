@@ -91,6 +91,7 @@ contract OneCrowdsale is PreSaleCrowdsale {
   /**                              Members
   /***********************************************************************/
   bool public isFinalized = false;
+  uint256 finalizedTime = 0;
   
   uint256 constant reservePart = 17; // 17% of the total supply for future strategic plans for the created ecosystem
   uint256 constant teamPart = 12; // 12% of the total supply for the team and SDK developers
@@ -247,9 +248,9 @@ contract OneCrowdsale is PreSaleCrowdsale {
    *
    * @param _wallet address of wallet to got the tokens
    * @param _mainCliffAmount percent of token could taken before mainCliffTime
-   * @param _mainCliffTime timestamp for main cliff
+   * @param _mainCliffTime days from finish time for main cliff
    * @param _additionalCliffAmount percent of token could taken before _additionalCliffTime
-   * @param _additionalCliffTime timestamp for additional cliff
+   * @param _additionalCliffTime days from finish time for additional cliff
    *
    *
    *   |                                    /----------------
@@ -289,9 +290,9 @@ function assignDepositTimeLock(
     
     DepositTimeLock storage timeLock = depositTimeLockMap[_wallet];
     timeLock.mainCliffAmount = _mainCliffAmount;
-    timeLock.mainCliffTime = _mainCliffTime;
-    timeLock.additionalCliffTime = _additionalCliffTime;
+    timeLock.mainCliffTime = _mainCliffTime.mul(86400);
     timeLock.additionalCliffAmount = _additionalCliffAmount;
+    timeLock.additionalCliffTime = _additionalCliffTime.mul(86400);
     
     emit DepositTimeLockAssigned(_wallet, _mainCliffAmount, _mainCliffTime, _additionalCliffAmount, _additionalCliffTime);
   }
@@ -351,9 +352,9 @@ function assignDepositTimeLock(
     uint256 depositedToken = deposit.depositedTokens;
   
     uint256 vested;
-    if (timeLock.mainCliffTime > 0 && timeLock.mainCliffTime <= now) {
+    if (timeLock.mainCliffTime > 0 && finalizedTime.add(timeLock.mainCliffTime) <= now) {
       vested = depositedToken.mul(timeLock.mainCliffAmount).div(100);
-    } else if (timeLock.additionalCliffTime > 0 && timeLock.additionalCliffTime <= now) {
+    } else if (timeLock.additionalCliffTime > 0 && finalizedTime.add(timeLock.additionalCliffTime) <= now) {
       uint256 totalCliff = timeLock.mainCliffAmount.add(timeLock.additionalCliffAmount);
       vested = depositedToken.mul(totalCliff).div(100);
     } else {
@@ -425,6 +426,8 @@ function assignDepositTimeLock(
     ONE.mint(walletBounty, newTotalSupply.mul(bountyPart).div(100));
     
     ONE.finishMinting();
+    
+    finalizedTime = now;
     
     emit CrowdsakeFinished();
     isFinalized = true;
