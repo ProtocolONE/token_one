@@ -1,5 +1,3 @@
-
-
 import expectThrow from './helpers/expectThrow';
 
 const MintableToken = artifacts.require('../contracts/Tokens/MintableToken.sol');
