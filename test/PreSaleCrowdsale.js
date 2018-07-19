@@ -91,9 +91,8 @@ contract('PreSaleCrowdsale', ([owner, investor, wallet, bonusWallet, _]) => {
 
     // Delete invoice
     await this.crowdsale.deleteInvoice(investor);
-    //let tokenDel = await this.crowdsale.invoicesMap.call(investor);
-    //assert.equal(tokenAdded, 0);
-
+    let tokenDel = await this.crowdsale.invoicesMap.call(investor);
+    assert.equal(tokenDel, 0);
   }); 
 
 });
