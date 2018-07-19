@@ -57,12 +57,12 @@ contract('OneSmartToken', (accounts) => {
   });
 
   it('should unlock token correctly', async () => {
-      let result = await token.unlock();
-      assert.equal(result.logs[0].event, 'Unlocked');
+    const result = await token.unlock();
+    assert.equal(result.logs[0].event, 'Unlocked');
   });
 
   it('should fail unlock token with exception', async () => {
-    let result = await token.unlock();
+    const result = await token.unlock();
     assert.equal(result.logs[0].event, 'Unlocked');
     await expectThrow(token.unlock());
   });
