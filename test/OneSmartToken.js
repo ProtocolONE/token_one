@@ -193,7 +193,7 @@ contract('OneSmartToken', (accounts) => {
 
     await expectThrow(token.transferFrom(accounts[0], accounts[1], transferAmount));
 
-    result = await token.increaseApproval(accounts[0], 1)
+    result = await token.increaseApproval(accounts[0], 1);
     assert.equal(result.logs[0].event, 'Approval');
 
     result = await token.transferFrom(accounts[0], accounts[1], transferAmount);
@@ -213,7 +213,7 @@ contract('OneSmartToken', (accounts) => {
     await token.unlock();
     await token.approve(accounts[0], amount);
 
-    const result = await token.decreaseApproval(accounts[0], 1)
+    const result = await token.decreaseApproval(accounts[0], 1);
     assert.equal(result.logs[0].event, 'Approval');
 
     await expectThrow(token.transferFrom(accounts[0], accounts[1], amount));
