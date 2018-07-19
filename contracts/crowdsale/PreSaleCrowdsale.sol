@@ -114,16 +114,16 @@ contract PreSaleCrowdsale is Crowdsale {
     require(_incomeWallet != address(0));
     require(_wallet != address(0));
     require(_weiMinAmount > 0);
-    
+
     if (_bonusRate > 0) {
       require(_bonusRateTime > now);
     }
-    
+
     if (_bonusShare > 0) {
       require(_bonusShare <= 100);
       require(_bonusWallet != address(0));
     }
-  
+
     PreSaleConditions storage investor = investorsMap[_incomeWallet];
     // Adding new key if not present:
     if (investor.wallet == address(0)) {
@@ -210,23 +210,23 @@ contract PreSaleCrowdsale is Crowdsale {
   function deleteInvoice(address _wallet) external onlyAdmins onlyWhileOpen {
     require(_wallet != address(0));
     require(invoicesMap[_wallet] > 0);
-    
+
     //delete from the map:
     delete invoicesMap[_wallet];
-    
+
     //delete from the array (keys):
     uint256 index;
     for (uint256 i = 0; i < invoiceMapKeys.length; i++) {
-      if (investorsMapKeys[i] == _wallet) {
+      if (invoiceMapKeys[i] == _wallet) {
         index = i;
         break;
       }
-    }
+    }    
     
     invoiceMapKeys[index] = invoiceMapKeys[invoiceMapKeys.length - 1];
     delete invoiceMapKeys[invoiceMapKeys.length - 1];
     invoiceMapKeys.length--;
-    
+
     emit InvoiceDeleted(_wallet);
   }
 }
