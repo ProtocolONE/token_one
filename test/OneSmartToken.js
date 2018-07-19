@@ -130,4 +130,92 @@ contract('OneSmartToken', (accounts) => {
 
     await expectThrow(token.burn(accounts[0], burnAmount));
   });
+
+  it('should transfer coins from first account to second account correctly', async () => {
+    const amount = 10;
+
+    await token.mint(accounts[0], amount);
+
+    let result = await token.unlock();
+    assert.equal(result.logs[0].event, 'Unlocked');
+
+    const accountOneStartingBalance = (await token.balanceOf(accounts[0])).toNumber();
+    const accountTwoStartingBalance = (await token.balanceOf(accounts[1])).toNumber();
+
+    result = await token.approve(accounts[0], amount);
+    assert.equal(result.logs[0].event, 'Approval');
+
+    result = await token.transferFrom(accounts[0], accounts[1], amount);
+    assert.equal(result.logs[0].event, 'Transfer');
+
+    const accountOneEndingBalance = (await token.balanceOf(accounts[0])).toNumber();
+    const accountTwoEndingBalance = (await token.balanceOf(accounts[1])).toNumber();
+
+    assert.equal(accountOneEndingBalance, accountOneStartingBalance - amount);
+    assert.equal(accountTwoEndingBalance, accountTwoStartingBalance + amount);
+  });
+
+  it('approve transfer tokens between accounts with unlock exception', async () => {
+    await token.mint(accounts[0], 10);
+    await expectThrow(token.approve(accounts[0], 10));
+  });
+
+  it('transfer tokens between accounts with not approve exception', async () => {
+    await token.mint(accounts[0], 10);
+    await expectThrow(token.transferFrom(accounts[0], accounts[1], 10));
+  });
+
+  it('transfer tokens between accounts with with amount not allowed on balance exception', async () => {
+    const amount = 10;
+    const transferAmount = 11;
+
+    await token.mint(accounts[0], amount);
+    await token.unlock();
+    await token.approve(accounts[0], amount);
+
+    await expectThrow(token.transferFrom(accounts[0], accounts[1], transferAmount));
+  });
+
+  it('increase amount to transfer between accounts', async () => {
+    const amount = 100;
+    const transferAmount = 11;
+
+    await token.mint(accounts[0], amount);
+
+    const accountOneStartingBalance = (await token.balanceOf(accounts[0])).toNumber();
+    const accountTwoStartingBalance = (await token.balanceOf(accounts[1])).toNumber();
+
+    let result = await token.unlock();
+    assert.equal(result.logs[0].event, 'Unlocked');
+
+    result = await token.approve(accounts[0], 10);
+    assert.equal(result.logs[0].event, 'Approval');
+
+    await expectThrow(token.transferFrom(accounts[0], accounts[1], transferAmount));
+
+    result = await token.increaseApproval(accounts[0], 1)
+    assert.equal(result.logs[0].event, 'Approval');
+
+    result = await token.transferFrom(accounts[0], accounts[1], transferAmount);
+    assert.equal(result.logs[0].event, 'Transfer');
+
+    const accountOneEndingBalance = (await token.balanceOf(accounts[0])).toNumber();
+    const accountTwoEndingBalance = (await token.balanceOf(accounts[1])).toNumber();
+
+    assert.equal(accountOneEndingBalance, accountOneStartingBalance - transferAmount);
+    assert.equal(accountTwoEndingBalance, accountTwoStartingBalance + transferAmount);
+  });
+
+  it('decrease amount to transfer between accounts', async () => {
+    const amount = 10;
+
+    await token.mint(accounts[0], amount);
+    await token.unlock();
+    await token.approve(accounts[0], amount);
+
+    const result = await token.decreaseApproval(accounts[0], 1)
+    assert.equal(result.logs[0].event, 'Approval');
+
+    await expectThrow(token.transferFrom(accounts[0], accounts[1], amount));
+  });
 });
