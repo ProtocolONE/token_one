@@ -43,4 +43,91 @@ contract('OneSmartToken', (accounts) => {
     assert.equal(await token.mintingFinished(), true);
     await expectThrow(token.mint(accounts[0], 100));
   });
+
+  it('should lock token correctly', async () => {
+    let result = await token.unlock();
+    assert.equal(result.logs[0].event, 'Unlocked');
+
+    result = await token.lock();
+    assert.equal(result.logs[0].event, 'Locked');
+  });
+
+  it('should fail lock token with exception', async () => {
+    await expectThrow(token.lock());
+  });
+
+  it('should unlock token correctly', async () => {
+      let result = await token.unlock();
+      assert.equal(result.logs[0].event, 'Unlocked');
+  });
+
+  it('should fail unlock token with exception', async () => {
+    let result = await token.unlock();
+    assert.equal(result.logs[0].event, 'Unlocked');
+    await expectThrow(token.unlock());
+  });
+
+  it('should fail with exception to transfer coins', async () => {
+    await token.mint(accounts[0], 10);
+    await expectThrow(token.transfer(accounts[1], 10));
+  });
+
+  it('should transfer coins correctly', async () => {
+    const amount = 10;
+
+    await token.mint(accounts[0], amount);
+
+    const accountOneStartingBalance = await token.balanceOf(accounts[0]);
+    const accountTwoStartingBalance = await token.balanceOf(accounts[1]);
+
+    let result = await token.unlock();
+    assert.equal(result.logs[0].event, 'Unlocked');
+
+    result = await token.transfer(accounts[1], amount);
+    assert.equal(result.logs[0].event, 'Transfer');
+
+    const accountOneEndingBalance = await token.balanceOf(accounts[0]);
+    const accountTwoEndingBalance = await token.balanceOf(accounts[1]);
+
+    assert.equal(accountOneEndingBalance.toNumber(), accountOneStartingBalance - amount);
+    assert.equal(accountTwoEndingBalance.toNumber(), accountTwoStartingBalance + amount);
+  });
+
+  it('should burn coins correctly', async () => {
+    const amount = 10;
+    const burnAmount = 1;
+
+    await token.mint(accounts[0], amount);
+
+    let result = await token.unlock();
+    assert.equal(result.logs[0].event, 'Unlocked');
+
+    result = await token.transfer(accounts[0], amount);
+    assert.equal(result.logs[0].event, 'Transfer');
+
+    const accountStartingBalance = await token.balanceOf(accounts[0]);
+
+    result = await token.burn(accounts[0], burnAmount);
+    assert.equal(result.logs[0].event, 'Burn');
+
+    const accountEndingBalance = await token.balanceOf(accounts[0]);
+
+    assert.equal(accountStartingBalance.toNumber(), amount);
+    assert.equal(accountEndingBalance.toNumber(), accountStartingBalance - burnAmount);
+  });
+
+  it('burn tokens greater than has on balance', async () => {
+    const amount = 10;
+    const burnAmount = 11;
+
+    await token.mint(accounts[0], amount);
+
+    let result = await token.unlock();
+    assert.equal(result.logs[0].event, 'Unlocked');
+
+    result = await token.transfer(accounts[0], amount);
+    assert.equal(result.logs[0].event, 'Transfer');
+
+    await expectThrow(token.burn(accounts[0], burnAmount));
+  });
 });

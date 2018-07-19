@@ -56,7 +56,7 @@ contract OneSmartToken is MintableToken {
   function lock() public onlyOwner whenNotLocked {
     locked = true;
     
-    emit Unlocked();
+    emit Locked();
   }
   
   /**
