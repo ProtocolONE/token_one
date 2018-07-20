@@ -11,7 +11,7 @@ contract('Administrable', (accounts) => {
     await admin.addAdmin(accounts[1]);
     const accAdmin = await admin.admins.call(accounts[1]);
     assert.equal(accAdmin, true);
-  });  
+  });
 
   it('delete admin', async () => {
     await admin.addAdmin(accounts[1]);
