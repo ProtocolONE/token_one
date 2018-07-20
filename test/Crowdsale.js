@@ -19,7 +19,7 @@ contract('Crowdsale', () => {
     await advanceBlock();
   });
 
-  beforeEach(async function () {
+  beforeEach(async () => {
     this.startTime = latestTime() + duration.weeks(1);
     this.endTime = this.startTime + duration.weeks(1);
     this.afterEndTime = this.endTime + duration.seconds(1);
@@ -27,35 +27,34 @@ contract('Crowdsale', () => {
     this.crowdsale = await Crowdsale.new(this.startTime, this.endTime, rate, softCap, hardCap);
   });
 
-  it('should be ended only after end', async function () {
+  it('should be ended only after end', async () => {
     let ended = await this.crowdsale.hasClosed();
     ended.should.equal(false);
     await increaseTimeTo(this.afterEndTime);
     ended = await this.crowdsale.hasClosed();
     ended.should.equal(true);
-  }); 
+  });
 
-  it('check rate', async function () {
-    let rateFromContract = await this.crowdsale.getRate();
+  it('check rate', async () => {
+    const rateFromContract = await this.crowdsale.getRate();
     assert.equal(rateFromContract, 1000);    
   });
 
-  it('check open modifier', async function () {
+  it('check open modifier', async () => {
     await increaseTimeTo(this.startTime);
     await this.crowdsale.setRate(1001);
     let rateFromContract = await this.crowdsale.getRate();
     // Should be changed
-    assert.equal(rateFromContract, 1001);    
+    assert.equal(rateFromContract, 1001);
 
     await increaseTimeTo(this.afterEndTime);
     try {
       await this.crowdsale.setRate(1002);
     } catch (error) {
-      return utils.ensureException(error);
+      utils.ensureException(error);
     }
 
     rateFromContract = await this.crowdsale.getRate();
     assert.equal(rateFromContract, 1001);
   });
-
 });
