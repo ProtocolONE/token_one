@@ -30,7 +30,7 @@ contract('ERC20Token', (accounts) => {
       await token.transfer(accounts[1], 500);
       assert(false, "didn't throw");
     } catch (error) {
-      return utils.ensureException(error);
+      utils.ensureException(error);
     }
   });
 
@@ -41,7 +41,7 @@ contract('ERC20Token', (accounts) => {
       await token.transfer(invalidAccount, 10);
       assert(false, "didn't throw");
     } catch (error) {
-      return utils.ensureException(error);
+      utils.ensureException(error);
     }
   });
 
@@ -102,7 +102,7 @@ contract('ERC20Token', (accounts) => {
       });
       assert(false, "didn't throw");
     } catch (error) {
-      return utils.ensureException(error);
+      utils.ensureException(error);
     }
   });
 
@@ -116,7 +116,7 @@ contract('ERC20Token', (accounts) => {
       });
       assert(false, "didn't throw");
     } catch (error) {
-      return utils.ensureException(error);
+      utils.ensureException(error);
     }
   });
 
@@ -130,7 +130,7 @@ contract('ERC20Token', (accounts) => {
       });
       assert(false, "didn't throw");
     } catch (error) {
-      return utils.ensureException(error);
+      utils.ensureException(error);
     }
   });
 });
