@@ -1,29 +1,21 @@
-import ether from './helpers/ether';
 import { advanceBlock } from './helpers/advanceToBlock';
 import { increaseTimeTo, duration } from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
-import EVMThrow from './helpers/EVMThrow';
 
 const utils = require('./helpers/Utils');
 
-const BigNumber = web3.BigNumber;
-const should = require('chai')
-  .use(require('chai-as-promised'))
-  .use(require('chai-bignumber')(BigNumber))
-  .should();
+require('chai').use(require('chai-as-promised')).use(require('chai-bignumber')(web3.BigNumber)).should();
 
 const Crowdsale = artifacts.require('../contracts/crowdsale/Crowdsale.sol');
-const SmartToken = artifacts.require('OneSmartToken');
 
-contract('Crowdsale', ([_, investor, wallet, purchaser]) => {
-  const rate = new BigNumber(1000);
-  const softCap = new BigNumber(2000);
-  const hardCap = new BigNumber(5000);
-
-  const value = ether(42);
+contract('Crowdsale', () => {
+  const rate = new web3.BigNumber(1000);
+  const softCap = new web3.BigNumber(2000);
+  const hardCap = new web3.BigNumber(5000);
 
   before(async () => {
-    // Advance to the next block to correctly read time in the solidity "now" function interpreted by testrpc
+    // Advance to the next block to correctly read
+    // time in the solidity "now" function interpreted by testrpc
     await advanceBlock();
   });
 

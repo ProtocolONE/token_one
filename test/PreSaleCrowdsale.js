@@ -54,7 +54,7 @@ contract('PreSaleCrowdsale', ([owner, investor, wallet, bonusWallet, _]) => {
     await this.crowdsale.addAdmin(owner);
     await this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
     let investorDescription = await this.crowdsale.investorsMap.call(investor);
-    assert.equal(investorDescription[0], wallet);
+    assert.equal(investorDescription[0], wallet);    
   });
 
   it('delete deal', async function () {
