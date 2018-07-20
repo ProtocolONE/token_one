@@ -1,4 +1,3 @@
- import expectThrow from './helpers/expectThrow';
 
 const Administrable = artifacts.require('../contracts/ownership/Administrable.sol');
 
@@ -11,7 +10,7 @@ contract('Administrable', (accounts) => {
 
   it('add admin', async () => {
     await admin.addAdmin(accounts[1]);
-    let accAdmin = await admin.admins.call(accounts[1]);
+    const accAdmin = await admin.admins.call(accounts[1]);
     assert.equal(accAdmin, true);
   });  
 
@@ -32,7 +31,7 @@ contract('Administrable', (accounts) => {
     await admin.addAdmin(accounts[4]);
     await admin.addAdmin(accounts[5]);
 
-    let totalAdmins = await admin.totalAdminsMapping();
+    const totalAdmins = await admin.totalAdminsMapping();
     assert.equal(totalAdmins, 5);
   });
 });
