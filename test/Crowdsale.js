@@ -37,7 +37,7 @@ contract('Crowdsale', () => {
 
   it('check rate', async () => {
     const rateFromContract = await this.crowdsale.getRate();
-    assert.equal(rateFromContract, 1000);    
+    assert.equal(rateFromContract, 1000);
   });
 
   it('check open modifier', async () => {
