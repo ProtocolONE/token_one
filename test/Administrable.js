@@ -1,4 +1,3 @@
-
 const Administrable = artifacts.require('../contracts/ownership/Administrable.sol');
 
 contract('Administrable', (accounts) => {
