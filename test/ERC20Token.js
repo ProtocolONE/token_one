@@ -20,7 +20,7 @@ contract('ERC20Token', (accounts) => {
   it('verifies that a transfer fires a Transfer event', async () => {
     const token = await TestERC20Token.new(10000);
     const res = await token.transfer(accounts[1], 500);
-    assert(res.logs.length > 0 && res.logs[0].event == 'Transfer');
+    assert(res.logs.length > 0 && res.logs[0].event === 'Transfer');
   });
 
   it('should throw when attempting to transfer more than the balance', async () => {
@@ -55,7 +55,7 @@ contract('ERC20Token', (accounts) => {
   it('verifies that an approval fires an Approval event', async () => {
     const token = await TestERC20Token.new(10000);
     const res = await token.approve(accounts[1], 500);
-    assert(res.logs.length > 0 && res.logs[0].event == 'Approval');
+    assert(res.logs.length > 0 && res.logs[0].event === 'Approval');
   });
 
   it('verifies the balances after transferring from another account', async () => {
@@ -79,7 +79,7 @@ contract('ERC20Token', (accounts) => {
     const res = await token.transferFrom(accounts[0], accounts[2], 50, {
       from: accounts[1],
     });
-    assert(res.logs.length > 0 && res.logs[0].event == 'Transfer');
+    assert(res.logs.length > 0 && res.logs[0].event === 'Transfer');
   });
 
   it('verifies the new allowance after transferring from another account', async () => {
