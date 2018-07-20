@@ -35,7 +35,7 @@ module.exports = {
       host: "localhost",
       network_id: "*",
       port: 8555,
-      gas: 4600000,
+      gas: 60000000,
       gasPrice: 0x01
     },
     coverage: {
