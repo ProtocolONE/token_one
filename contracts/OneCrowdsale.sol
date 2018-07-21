@@ -167,6 +167,7 @@ contract OneCrowdsale is PreSaleCrowdsale {
     require(deal.wallet != address(0));
     require(deal.weiMinAmount <= weiAmount);
     require(deal.completed == false);
+    require(rate > 0);
     
     // calculate token amount to be created based on fixed rate
     uint256 baseDealTokens = weiAmount.mul(rate);
@@ -235,8 +236,8 @@ contract OneCrowdsale is PreSaleCrowdsale {
     
     DealDeposit storage deposit = depositMap[_wallet];
     deposit.refundWallet = _refundWallet;
-    deposit.depositedETH.add(_wei);
-    deposit.depositedTokens.add(_tokens);
+    deposit.depositedETH = deposit.depositedETH.add(_wei);
+    deposit.depositedTokens = deposit.depositedTokens.add(_tokens);
     
     ONE.mint(address(this), _tokens.add(_tokens)); //UNDONE
     
@@ -318,12 +319,12 @@ function assignDepositTimeLock(
   function refundDeposit(address _wallet) external onlyAdmins {
     DealDeposit storage deposit = depositMap[_wallet];
     require(deposit.depositedTokens > 0);
-    
+
     uint256 refundTokens = deposit.depositedTokens;
     require(refundTokens > 0);
-  
+
     deposit.depositedTokens = 0;
-    
+
     ONE.burn(address(this), refundTokens);
 
     uint256 ETHToRefund = deposit.depositedETH;
@@ -331,7 +332,7 @@ function assignDepositTimeLock(
       deposit.depositedETH = 0;
       deposit.refundWallet.transfer(ETHToRefund);
     }
-  
+
     emit RefundedDeposit(_wallet, ETHToRefund, refundTokens);
   }
   
@@ -340,13 +341,13 @@ function assignDepositTimeLock(
    */
   function claimTokens() public onlyKYCPassed {
     require(isFinalized);
-    
+
     address investor = msg.sender;
   
     DealDeposit storage deposit = depositMap[investor];
   
     require(deposit.depositedTokens > 0);
-  
+
     DepositTimeLock storage timeLock = depositTimeLockMap[investor];
     
     uint256 depositedToken = deposit.depositedTokens;
@@ -364,16 +365,19 @@ function assignDepositTimeLock(
     if (vested == 0) {
       return;
     }
-  
+
     // Make sure the holder doesn't transfer more than what he already has.
     uint256 transferable = vested.sub(deposit.transferred);
     if (transferable == 0) {
       return;
     }
-  
+
     deposit.transferred = deposit.transferred.add(transferable);
+
+    ONE.unlock();
     ONE.transfer(investor, transferable);
-  
+    ONE.lock();
+
     emit TokenClaimed(investor, transferable);
   }
   
