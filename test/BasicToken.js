@@ -7,7 +7,7 @@ contract('BasicToken', (accounts) => {
     const token = await BasicTokenMock.new(accounts[0], 100);
     const totalSupply = await token.totalSupply();
 
-    assert.equal(totalSupply, 100);
+    assert.equal(totalSupply.toNumber(), 100);
   });
 
   it('should return correct balances after transfer', async () => {
