@@ -7,7 +7,7 @@ contract('BasicToken', (accounts) => {
     const token = await BasicTokenMock.new(accounts[0], 100);
     const totalSupply = await token.totalSupply();
 
-    assert.equal(totalSupply.toNumber(), 100);
+    assert.equal(totalSupply, 100);
   });
 
   it('should return correct balances after transfer', async () => {
@@ -15,10 +15,10 @@ contract('BasicToken', (accounts) => {
     await token.transfer(accounts[1], 100);
 
     const firstAccountBalance = await token.balanceOf(accounts[0]);
-    assert.equal(firstAccountBalance.toNumber(), 0);
+    assert.equal(firstAccountBalance, 0);
 
     const secondAccountBalance = await token.balanceOf(accounts[1]);
-    assert.equal(secondAccountBalance.toNumber(), 100);
+    assert.equal(secondAccountBalance, 100);
   });
 
   it('should throw an error when trying to transfer more than balance', async () => {
