@@ -30,7 +30,7 @@ contract('Administrable', (accounts) => {
     await admin.addAdmin(accounts[4]);
     await admin.addAdmin(accounts[5]);
 
-    const totalAdmins = await admin.totalAdminsMapping();
+    let totalAdmins = await admin.totalAdminsMapping.call({from : accounts[0]});
     assert.equal(totalAdmins, 5);
   });
 });
