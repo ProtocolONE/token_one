@@ -101,11 +101,11 @@ contract('StandardToken', (accounts) => {
     });
 
     it('should increase by 50 then decrease by 10', async () => {
-      await token.increaseApproval.call(accounts[1], 50);
-      const postIncrease = await token.allowance.call(accounts[0], accounts[1]);
+      await token.increaseApproval.call(accounts[1], 50, {from : accounts[0]});
+      const postIncrease = await token.allowance.call(accounts[0], accounts[1], {from : accounts[0]});
       preApproved.plus(50).should.be.bignumber.equal(postIncrease);
-      await token.decreaseApproval(accounts[1], 10);
-      const postDecrease = await token.allowance.call(accounts[0], accounts[1]);
+      await token.decreaseApproval.call(accounts[1], 10, {from : accounts[0]});
+      const postDecrease = await token.allowance.call(accounts[0], accounts[1], {from : accounts[0]});
       postIncrease.minus(10).should.be.bignumber.equal(postDecrease);
     });
   });
