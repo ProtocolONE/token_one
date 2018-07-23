@@ -5,7 +5,7 @@ const BasicTokenMock = artifacts.require('./helpers/BasicTokenMock.sol');
 contract('BasicToken', (accounts) => {
   it('should return the correct totalSupply after construction', async () => {
     const token = await BasicTokenMock.new(accounts[0], 100);
-    const totalSupply = (await token.totalSupply()).toNumber();
+    const totalSupply = await token.totalSupply();
 
     assert.equal(totalSupply, 100);
   });
