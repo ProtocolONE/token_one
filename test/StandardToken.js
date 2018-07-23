@@ -19,7 +19,7 @@ contract('StandardToken', (accounts) => {
   it('should return the correct totalSupply after construction', async () => {
     const totalSupply = await token.totalSupply();
 
-    assert.equal(totalSupply.toNumber(), 100);
+    assert.equal(totalSupply, 100);
   });
 
   it('should return the correct allowance amount after approval', async () => {
