@@ -14,10 +14,10 @@ contract('BasicToken', (accounts) => {
     const token = await BasicTokenMock.new(accounts[0], 100);
     await token.transfer(accounts[1], 100);
 
-    const firstAccountBalance = await token.balanceOf(accounts[0]);
+    const firstAccountBalance = await token.balanceOf.call(accounts[0], {from : accounts[0]});
     assert.equal(firstAccountBalance, 0);
 
-    const secondAccountBalance = await token.balanceOf(accounts[1]);
+    const secondAccountBalance = await token.balanceOf.call(accounts[1], {from : accounts[0]});
     assert.equal(secondAccountBalance, 100);
   });
 
