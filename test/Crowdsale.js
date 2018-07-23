@@ -44,14 +44,14 @@ contract('Crowdsale', ([_, investor, wallet, purchaser]) => {
   });
 
   it('check rate', async function () {
-    let rateFromContract = await this.crowdsale.getRate();
+    let rateFromContract = await this.crowdsale.getRate.call({from : investor});
     assert.equal(rateFromContract, 1000);
   });
 
   it('check open modifier', async function () {
     await increaseTimeTo(this.startTime);
     await this.crowdsale.setRate(1001);
-    let rateFromContract = await this.crowdsale.getRate();
+    let rateFromContract = await this.crowdsale.getRate.call({from : investor});
     // Should be changed
     assert.equal(rateFromContract, 1001);
 
@@ -62,7 +62,7 @@ contract('Crowdsale', ([_, investor, wallet, purchaser]) => {
       return utils.ensureException(error);
     }
 
-    rateFromContract = await this.crowdsale.getRate();
+    rateFromContract = await this.crowdsale.getRate.call({from : investor});
     assert.equal(rateFromContract, 1001);
   });
 
