@@ -17,7 +17,7 @@ contract('StandardToken', (accounts) => {
   });
 
   it('should return the correct totalSupply after construction', async () => {
-    const totalSupply = await token.totalSupply();
+    const totalSupply = await token.totalSupply().call();
 
     assert.equal(totalSupply, 100);
   });
