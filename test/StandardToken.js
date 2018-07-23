@@ -33,10 +33,10 @@ contract('StandardToken', (accounts) => {
   it('should return correct balances after transfer', async () => {
     const token = await StandardTokenMock.new(accounts[0], 100);
     await token.transfer(accounts[1], 100);
-    const balance0 = await token.balanceOf(accounts[0]);
+    const balance0 = await token.balanceOf.call(accounts[0]);
     assert.equal(balance0, 0);
 
-    const balance1 = await token.balanceOf(accounts[1]);
+    const balance1 = await token.balanceOf.call(accounts[1]);
     assert.equal(balance1, 100);
   });
 
@@ -57,13 +57,13 @@ contract('StandardToken', (accounts) => {
       from: accounts[1],
     });
 
-    const balance0 = await token.balanceOf(accounts[0]);
+    const balance0 = await token.balanceOf.call(accounts[0]);
     assert.equal(balance0, 0);
 
-    const balance1 = await token.balanceOf(accounts[2]);
+    const balance1 = await token.balanceOf.call(accounts[2]);
     assert.equal(balance1, 100);
 
-    const balance2 = await token.balanceOf(accounts[1]);
+    const balance2 = await token.balanceOf.call(accounts[1]);
     assert.equal(balance2, 0);
   });
 
@@ -83,7 +83,7 @@ contract('StandardToken', (accounts) => {
     const balance0 = await token.balanceOf(accounts[0]);
     await token.approve(accounts[1], 99);
     try {
-      await token.transferFrom(accounts[0], accounts[2], balance0 + 1, {
+      await token.transferFrom.call(accounts[0], accounts[2], balance0 + 1, {
         from: accounts[1],
       });
       assert.fail('should have thrown before');
@@ -96,16 +96,16 @@ contract('StandardToken', (accounts) => {
     let preApproved;
 
     it('should start with zero', async () => {
-      preApproved = await token.allowance(accounts[0], accounts[1]);
+      preApproved = await token.allowance.call(accounts[0], accounts[1]);
       assert.equal(preApproved, 0);
     });
 
     it('should increase by 50 then decrease by 10', async () => {
-      await token.increaseApproval(accounts[1], 50);
-      const postIncrease = await token.allowance(accounts[0], accounts[1]);
+      await token.increaseApproval.call(accounts[1], 50);
+      const postIncrease = await token.allowance.call(accounts[0], accounts[1]);
       preApproved.plus(50).should.be.bignumber.equal(postIncrease);
       await token.decreaseApproval(accounts[1], 10);
-      const postDecrease = await token.allowance(accounts[0], accounts[1]);
+      const postDecrease = await token.allowance.call(accounts[0], accounts[1]);
       postIncrease.minus(10).should.be.bignumber.equal(postDecrease);
     });
   });
@@ -113,7 +113,7 @@ contract('StandardToken', (accounts) => {
   it('should increase by 50 then set to 0 when decreasing by more than 50', async () => {
     await token.approve(accounts[1], 50);
     await token.decreaseApproval(accounts[1], 60);
-    const postDecrease = await token.allowance(accounts[0], accounts[1]);
+    const postDecrease = await token.allowance.call(accounts[0], accounts[1]);
     postDecrease.should.be.bignumber.equal(0);
   });
 
@@ -131,7 +131,7 @@ contract('StandardToken', (accounts) => {
     const token = await StandardTokenMock.new(accounts[0], 100);
     await token.approve(accounts[1], 100);
     try {
-      const transfer = await token.transferFrom(accounts[0], 0x0, 100, {
+      const transfer = await token.transferFrom.call(accounts[0], 0x0, 100, {
         from: accounts[1],
       });
       assert.fail('should have thrown before');
