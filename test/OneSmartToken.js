@@ -24,7 +24,7 @@ contract('OneSmartToken', (accounts) => {
   });
 
   it('only owner can unlock token', async () => {
-    await token.unlock({ from : accounts[1] });
+    await expectThrow(token.unlock({ from : accounts[1] }));
   });
 
   it('should mint a given amount of tokens to a given address', async () => {
