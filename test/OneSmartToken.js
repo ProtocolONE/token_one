@@ -23,6 +23,10 @@ contract('OneSmartToken', (accounts) => {
     assert.equal(mintingFinished, false);
   });
 
+  it('only owner can unlock token', async () => {
+    await token.unlock({ from : accounts[1] });
+  });
+
   it('should mint a given amount of tokens to a given address', async () => {
     const result = await token.mint(accounts[0], 100);
     assert.equal(result.logs[0].event, 'Mint');
