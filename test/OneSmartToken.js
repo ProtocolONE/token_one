@@ -11,6 +11,10 @@ contract('OneSmartToken', (accounts) => {
     token = await MintableToken.new(accounts[0]);
   });
 
+  it('token instance create exception', async () => {
+    await expectThrow(MintableToken.new(0));
+  });
+
   it('should start with a totalSupply of 0', async () => {
     const totalSupply = await token.totalSupply();
 
