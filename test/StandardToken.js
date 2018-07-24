@@ -95,19 +95,22 @@ contract('StandardToken', (accounts) => {
   describe('validating allowance updates to spender', () => {
     let preApproved;
 
-    it('should start with zero', async () => {
-      preApproved = await token.allowance.call(accounts[0], accounts[1]);
-      assert.equal(preApproved, 0);
+    beforeEach(async () => {
+      preApproved = new BigNumber(0);
     });
 
     it('should increase by 50 then decrease by 10', async () => {
-      //await token.increaseApproval.call(accounts[1], 50, {from : accounts[0]});
-      await token.approve(accounts[1], 50);
-      const postIncrease = await token.allowance.call(accounts[0], accounts[1], {from : accounts[0]});
+      await token.increaseApproval(accounts[1], 50);
+      let postIncrease = await token.allowance.call(accounts[0], accounts[1], {from : accounts[0]});
       preApproved.plus(50).should.be.bignumber.equal(postIncrease);
-      await token.decreaseApproval.call(accounts[1], 10, {from : accounts[0]});
+      await token.decreaseApproval(accounts[1], 10);
       const postDecrease = await token.allowance.call(accounts[0], accounts[1], {from : accounts[0]});
       postIncrease.minus(10).should.be.bignumber.equal(postDecrease);
+    });
+
+    it('should start with zero', async () => {
+      preApproved = await token.allowance.call(accounts[0], accounts[1]);
+      assert.equal(preApproved, 0);
     });
   });
 
