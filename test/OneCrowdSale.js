@@ -120,10 +120,10 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
     let resItem = await this.crowdsale.depositMap.call(wallet);
     assert.equal(resItem[0], investor);
 
-    // Sending 
-
-    //await this.crowdsale.refundDeposit(wallet);
-    //assert.equal(result.logs[0].event, 'RefundedDeposit');    
+    // Sending
+    await this.crowdsale.sendTransaction({ value: 1001, from: wallet })
+    let resultBack = await this.crowdsale.refundDeposit(wallet);
+    assert.equal(resultBack.logs[0].event, 'RefundedDeposit');    
   });
 
   it('finish crowdsale', async function () {
