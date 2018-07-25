@@ -2,7 +2,8 @@
 [![Build Status](https://travis-ci.org/ProtocolONE/token_one.svg?branch=master)](https://travis-ci.org/ProtocolONE/token_one)
 [![Coverage Status](https://coveralls.io/repos/github/ProtocolONE/token_one/badge.svg?branch=master)](https://coveralls.io/github/ProtocolONE/token_one?branch=master)
 
-This project contains the smart contracts that govern the [Protocol One](https://protocol.one/) token.
+This project contains the example of the smart contracts that govern the [Protocol One](https://protocol.one/) token. 
+We use this repository to learn how to write smart contracts for the Ethereum network in practice. 
 
 The official Protocol One token, with the ERC-20 symbol `ONE` is located on ethereum 
 and could be resolved by name [protocolone.eth](https://etherscan.io/address/protocolone.eth). Which is currently `Update after deploy`.
