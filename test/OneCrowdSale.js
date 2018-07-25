@@ -309,4 +309,28 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
         )
     );
   });
+
+  it('assignDepositTimeLock exception with 0 wallet', async function () {
+    await expectThrow(this.crowdsale.assignDepositTimeLock(0, 10, 1, 5, 15));
+  });
+
+  it('assignDepositTimeLock exception with 0 mainCliffAmount', async function () {
+    await expectThrow(this.crowdsale.assignDepositTimeLock(wallet, 0, 1, 5, 15));
+  });
+
+  it('assignDepositTimeLock exception with mainCliffAmount greater than 100', async function () {
+    await expectThrow(this.crowdsale.assignDepositTimeLock(wallet, 111, 1, 5, 15));
+  });
+
+  it('assignDepositTimeLock exception with 0 mainCliffTime', async function () {
+    await expectThrow(this.crowdsale.assignDepositTimeLock(wallet, 10, 0, 5, 15));
+  });
+
+  it('assignDepositTimeLock exception with additionalCliffTime greater than 0 and lower than mainCliffTime', async function () {
+    await expectThrow(this.crowdsale.assignDepositTimeLock(wallet, 10, 15, 5, 1));
+  });
+
+  it('assignDepositTimeLock exception with mainCliffAmount plus additionalCliffAmount greater than 100', async function () {
+    await expectThrow(this.crowdsale.assignDepositTimeLock(wallet, 70, 1, 40, 15));
+  });
 });
