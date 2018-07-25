@@ -330,7 +330,7 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
     await expectThrow(this.crowdsale.assignDepositTimeLock(wallet, 10, 15, 5, 1));
   });
 
-  it('assignDepositTimeLock exception with mainCliffAmount plus additionalCliffAmount greater than 100', async function () {
+  it('assignDepositTimeLock exception with mainCliffAmount + additionalCliffAmount greater than 100', async function () {
     await expectThrow(this.crowdsale.assignDepositTimeLock(wallet, 70, 1, 40, 15));
   });
 });
