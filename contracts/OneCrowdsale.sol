@@ -151,7 +151,9 @@ contract OneCrowdsale is PreSaleCrowdsale {
    * @dev fallback function ***DO NOT OVERRIDE***
    */
   function () external payable {
-    buyTokens(msg.sender);
+    if (msg.sender != wallet ) {
+      buyTokens(msg.sender);
+    }
   }
   
   /**
