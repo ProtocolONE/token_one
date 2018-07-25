@@ -3,6 +3,7 @@ import { advanceBlock } from './helpers/advanceToBlock';
 import { increaseTimeTo, duration } from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
 import EVMThrow from './helpers/EVMThrow';
+import expectThrow from './helpers/expectThrow';
 
 const utils = require('./helpers/Utils');
 
@@ -167,5 +168,145 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
     assert.equal(resultFinish.logs[0].event, 'CrowdsakeFinished');
 
     await this.crowdsale.claimTokens.call({from : wallet});
+  });
+
+  it('return instance create exception with 0 wallet', async () => {
+    const startTime = latestTime() + duration.weeks(1);
+    const endTime = startTime + duration.weeks(1);
+
+    await expectThrow(
+        Crowdsale.new(
+            0,
+            walletTeam,
+            walletAdvisers,
+            walletOperating,
+            walletReserve,
+            walletBounty,
+            startTime,
+            endTime,
+            softCap,
+            hardCap
+        )
+    );
+  });
+
+  it('return instance create exception with 0 walletTeam', async () => {
+      const startTime = latestTime() + duration.weeks(1);
+      const endTime = startTime + duration.weeks(1);
+
+      await expectThrow(
+          Crowdsale.new(
+              wallet,
+              0,
+              walletAdvisers,
+              walletOperating,
+              walletReserve,
+              walletBounty,
+              startTime,
+              endTime,
+              softCap,
+              hardCap
+          )
+      );
+    });
+
+  it('return instance create exception with 0 walletAdvisers', async () => {
+    const startTime = latestTime() + duration.weeks(1);
+    const endTime = startTime + duration.weeks(1);
+
+    await expectThrow(
+        Crowdsale.new(
+            wallet,
+            walletTeam,
+            0,
+            walletOperating,
+            walletReserve,
+            walletBounty,
+            startTime,
+            endTime,
+            softCap,
+            hardCap
+        )
+    );
+  });
+
+  it('return instance create exception with 0 walletAdvisers', async () => {
+    const startTime = latestTime() + duration.weeks(1);
+    const endTime = startTime + duration.weeks(1);
+
+    await expectThrow(
+        Crowdsale.new(
+            wallet,
+            walletTeam,
+            0,
+            walletOperating,
+            walletReserve,
+            walletBounty,
+            startTime,
+            endTime,
+            softCap,
+            hardCap
+        )
+    );
+  });
+
+  it('return instance create exception with 0 walletOperating', async () => {
+    const startTime = latestTime() + duration.weeks(1);
+    const endTime = startTime + duration.weeks(1);
+
+    await expectThrow(
+        Crowdsale.new(
+            wallet,
+            walletTeam,
+            walletAdvisers,
+            0,
+            walletReserve,
+            walletBounty,
+            startTime,
+            endTime,
+            softCap,
+            hardCap
+        )
+    );
+  });
+
+  it('return instance create exception with 0 walletReserve', async () => {
+    const startTime = latestTime() + duration.weeks(1);
+    const endTime = startTime + duration.weeks(1);
+
+    await expectThrow(
+        Crowdsale.new(
+            wallet,
+            walletTeam,
+            walletAdvisers,
+            walletOperating,
+            0,
+            walletBounty,
+            startTime,
+            endTime,
+            softCap,
+            hardCap
+        )
+    );
+  });
+
+  it('return instance create exception with 0 walletBounty', async () => {
+    const startTime = latestTime() + duration.weeks(1);
+    const endTime = startTime + duration.weeks(1);
+
+    await expectThrow(
+        Crowdsale.new(
+            wallet,
+            walletTeam,
+            walletAdvisers,
+            walletOperating,
+            walletReserve,
+            0,
+            startTime,
+            endTime,
+            softCap,
+            hardCap
+        )
+    );
   });
 });
