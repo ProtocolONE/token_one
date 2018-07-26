@@ -186,4 +186,34 @@ contract('PreSaleCrowdsale', ([owner, investor, wallet, bonusWallet, _]) => {
 
     await expectThrow(this.crowdsale.deletePreSaleDeal(investor));
   });
+
+  it('deletePreSaleDeal exception with 0 wallet', async function () {
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
+
+    const investorsMapKeysBefore = await this.crowdsale.getInvestorsMapKeys();
+    const lengthBefore = investorsMapKeysBefore.length;
+
+    let index = 0;
+
+    for (let i = 0; i < lengthBefore; i++) {
+        if (investorsMapKeysBefore[i] != wallet) {
+            continue;
+        }
+
+        index = i;
+        break;
+    }
+
+    await this.crowdsale.deletePreSaleDeal(investor);
+
+    const investorsMapKeysAfter = await this.crowdsale.getInvestorsMapKeys();
+    const lengthAfter = investorsMapKeysAfter.length;
+
+    assert.equal(index, 0);
+    assert.isTrue(investorsMapKeysAfter[index] === undefined);
+    assert.isEmpty(investorsMapKeysAfter);
+    assert.isAbove(lengthBefore, lengthAfter);
+  });
 });

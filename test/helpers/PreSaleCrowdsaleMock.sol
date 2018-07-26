@@ -13,12 +13,15 @@ contract PreSaleCrowdsaleMock is PreSaleCrowdsale {
   
   }
 
-  function setZeroAddressToInvestorWallet(address _wallet)
-  {
+  function setZeroAddressToInvestorWallet(address _wallet) {
     if (investorsMap[_wallet].wallet == address(0)) {
       return;
     }
 
     investorsMap[_wallet].wallet = address(0);
+  }
+
+  function getInvestorsMapKeys() constant returns (address[]) {
+    return investorsMapKeys;
   }
 }
