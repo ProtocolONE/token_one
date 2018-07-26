@@ -150,4 +150,30 @@ contract('PreSaleCrowdsale', ([owner, investor, wallet, bonusWallet, _]) => {
     let investorDescription = await this.crowdsale.investorsMap.call(investor);
     assert.equal(investorDescription[0], wallet);
   });
+
+  it('addUpdatePreSaleDeal bonusShare is 0', async function () {
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, 0);
+
+    let investorDescription = await this.crowdsale.investorsMap.call(investor);
+    assert.equal(investorDescription[0], wallet);
+  });
+
+  it('addUpdatePreSaleDeal create new investor', async function () {
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    const log = await this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
+
+    assert.equal(log.logs[0].event, 'InvestorAdded');
+  });
+
+  it('addUpdatePreSaleDeal update investor', async function () {
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
+
+    const log = await this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
+    assert.equal(log.logs[0].event, 'InvestorUpdated');
+  });
 });
