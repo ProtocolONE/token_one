@@ -101,4 +101,42 @@ contract('PreSaleCrowdsale', ([owner, investor, wallet, bonusWallet, _]) => {
     await this.crowdsale.updateInvestorKYC(investor, true);
     await expectThrow(this.crowdsale.updateInvestorKYC(investor, true));
   });
+
+  it('addUpdatePreSaleDeal exception with 0 incomeWallet', async function () {
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await expectThrow(this.crowdsale.addUpdatePreSaleDeal(0, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare));
+  });
+
+  it('addUpdatePreSaleDeal exception with 0 wallet', async function () {
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await expectThrow(this.crowdsale.addUpdatePreSaleDeal(investor, 0, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare));
+  });
+
+  it('addUpdatePreSaleDeal exception with 0 weiMinAmount', async function () {
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await expectThrow(this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, 0, bonusRate, this.bonusRateTime, bonusShare));
+  });
+
+  it('addUpdatePreSaleDeal exception with 0 weiMinAmount', async function () {
+    let bonusRateTime = this.startTime - duration.minutes(10);
+
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await expectThrow(this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, bonusRateTime, bonusShare));
+  });
+
+  it('addUpdatePreSaleDeal exception with bonusShare greater than 100', async function () {
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await expectThrow(this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, 111));
+  });
+
+  it('addUpdatePreSaleDeal exception with 0 bonusWallet', async function () {
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await expectThrow(this.crowdsale.addUpdatePreSaleDeal(investor, wallet, 0, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare));
+  });
 });
