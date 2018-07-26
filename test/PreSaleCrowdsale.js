@@ -178,6 +178,12 @@ contract('PreSaleCrowdsale', ([owner, investor, wallet, bonusWallet, _]) => {
   });
 
   it('deletePreSaleDeal exception with 0 wallet', async function () {
-    await expectThrow(this.crowdsale.deletePreSaleDeal(0));
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
+
+    await this.crowdsale.setZeroAddressToInvestorWallet(investor);
+
+    await expectThrow(this.crowdsale.deletePreSaleDeal(investor));
   });
 });
