@@ -176,4 +176,8 @@ contract('PreSaleCrowdsale', ([owner, investor, wallet, bonusWallet, _]) => {
     const log = await this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
     assert.equal(log.logs[0].event, 'InvestorUpdated');
   });
+
+  it('deletePreSaleDeal exception with 0 wallet', async function () {
+    await expectThrow(this.crowdsale.deletePreSaleDeal(0));
+  });
 });
