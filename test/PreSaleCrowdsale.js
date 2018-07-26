@@ -139,4 +139,15 @@ contract('PreSaleCrowdsale', ([owner, investor, wallet, bonusWallet, _]) => {
     await this.crowdsale.addAdmin(owner);
     await expectThrow(this.crowdsale.addUpdatePreSaleDeal(investor, wallet, 0, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare));
   });
+
+  it('addUpdatePreSaleDeal bonusRate is 0', async function () {
+    let bonusRateTime = this.startTime - duration.minutes(10);
+
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, 0, bonusRateTime, bonusShare);
+
+    let investorDescription = await this.crowdsale.investorsMap.call(investor);
+    assert.equal(investorDescription[0], wallet);
+  });
 });
