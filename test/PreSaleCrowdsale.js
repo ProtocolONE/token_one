@@ -2,6 +2,7 @@ import ether from './helpers/ether';
 import { advanceBlock } from './helpers/advanceToBlock';
 import { increaseTimeTo, duration } from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
+import expectThrow from './helpers/expectThrow';
 
 const BigNumber = web3.BigNumber;
 const should = require('chai')
@@ -92,4 +93,12 @@ contract('PreSaleCrowdsale', ([owner, investor, wallet, bonusWallet, _]) => {
     assert.equal(tokenDel, 0);
   }); 
 
+  it('updateInvestorKYC exception 0 waller', async function () {
+    await expectThrow(this.crowdsale.updateInvestorKYC(0, true));
+  });
+
+  it('updateInvestorKYC exception with kyk passed false', async function () {
+    await this.crowdsale.updateInvestorKYC(investor, true);
+    await expectThrow(this.crowdsale.updateInvestorKYC(investor, true));
+  });
 });
