@@ -309,4 +309,20 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
         )
     );
   });
+
+  it('onlyKYCPassed exception', async function () {
+    const bonusWallet = new web3.BigNumber(1000);
+
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
+
+    await this.crowdsale.sendTransaction({ value: 1001, from: investor })
+    await this.crowdsale.investorsMap.call(investor);
+
+    await increaseTimeTo(this.afterEndTime);
+    await this.crowdsale.finishCrowdsale();
+
+    await expectThrow(this.crowdsale.claimTokens.call({from : wallet}));
+  });
 });
