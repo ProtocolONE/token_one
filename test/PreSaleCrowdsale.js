@@ -213,7 +213,6 @@ contract('PreSaleCrowdsale', ([owner, investor, wallet, bonusWallet, _]) => {
 
     assert.equal(index, 0);
     assert.isTrue(investorsMapKeysAfter[index] === undefined);
-    assert.isEmpty(investorsMapKeysAfter);
     assert.isAbove(lengthBefore, lengthAfter);
   });
 });
