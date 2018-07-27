@@ -18,7 +18,9 @@ contract('OneSmartToken', (accounts) => {
   it('should start with a totalSupply of 0', async () => {
     const totalSupply = await token.totalSupply();
 
-    assert.equal(totalSupply.toNumber(), 0);
+    console.log(totalSupply);
+
+    assert.equal(totalSupply, 0);
   });
 
   it('should return mintingFinished false after construction', async () => {
