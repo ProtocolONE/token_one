@@ -13,6 +13,7 @@ const should = require('chai')
   .should();
 
 const Crowdsale = artifacts.require('../contracts/OneCrowdsale.sol');
+const CrowdsaleMock = artifacts.require('./helpers/OneCrowdsaleMock.sol');
 const SmartToken = artifacts.require('OneSmartToken');
 
 contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOperating, walletReserve, walletBounty, refundWallet, investor]) => {
@@ -335,4 +336,32 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
 
     await expectThrow(this.crowdsale.buyTokens(investor));
   });
+
+  it('addDeposit exception 1', async function () {
+    const bonusWallet = new web3.BigNumber(1000);
+
+    this.crowdsaleMock = await CrowdsaleMock.new(wallet, walletTeam, walletAdvisers, walletOperating, walletReserve, walletBounty, 
+      this.startTime, this.endTime, softCap, hardCap);
+
+    await expectThrow(this.crowdsaleMock.addDepositMock(0, investor, 10, 10));
+  });
+
+  it('addDeposit exception 2', async function () {
+    const bonusWallet = new web3.BigNumber(1000);
+
+    this.crowdsaleMock = await CrowdsaleMock.new(wallet, walletTeam, walletAdvisers, walletOperating, walletReserve, walletBounty, 
+      this.startTime, this.endTime, softCap, hardCap);
+
+    await expectThrow(this.crowdsaleMock.addDepositMock(investor, 0, 10, 10));
+  });
+
+  it('addDeposit exception 3', async function () {
+    const bonusWallet = new web3.BigNumber(1000);
+
+    this.crowdsaleMock = await CrowdsaleMock.new(wallet, walletTeam, walletAdvisers, walletOperating, walletReserve, walletBounty, 
+      this.startTime, this.endTime, softCap, hardCap);
+
+    await expectThrow(this.crowdsaleMock.addDepositMock(investor, wallet, 10, 0));
+  });
+
 });
