@@ -122,7 +122,7 @@ contract PreSaleCrowdsale is Crowdsale {
     PreSaleConditions storage investor = investorsMap[_incomeWallet];
     // Adding new key if not present:
     if (investor.wallet == address(0)) {
-      investorsMapKeys.push(_wallet);
+      investorsMapKeys.push(_incomeWallet);
       emit InvestorAdded(_incomeWallet);
     } else {
       emit InvestorUpdated(_incomeWallet);

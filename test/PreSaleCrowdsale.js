@@ -190,29 +190,12 @@ contract('PreSaleCrowdsale', ([owner, investor, wallet, bonusWallet, _]) => {
   it('deletePreSaleDeal exception with 0 wallet', async function () {
     await increaseTimeTo(this.startTime);
     await this.crowdsale.addAdmin(owner);
-    await this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
+    let log = await this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
+    assert.equal(log.logs[0].event, 'InvestorAdded');
 
-    const investorsMapKeysBefore = await this.crowdsale.getInvestorsMapKeys();
-    const lengthBefore = investorsMapKeysBefore.length;
+    log = await this.crowdsale.deletePreSaleDeal(investor);
 
-    let index = 0;
-
-    for (let i = 0; i < lengthBefore; i++) {
-        if (investorsMapKeysBefore[i] != wallet) {
-            continue;
-        }
-
-        index = i;
-        break;
-    }
-
-    await this.crowdsale.deletePreSaleDeal(investor);
-
-    const investorsMapKeysAfter = await this.crowdsale.getInvestorsMapKeys();
-    const lengthAfter = investorsMapKeysAfter.length;
-
-    assert.equal(index, 0);
-    assert.isTrue(investorsMapKeysAfter[index] === undefined);
-    assert.isAbove(lengthBefore, lengthAfter);
+    assert.equal(log.logs[0].event, 'DeletePreSaleDealInvestorsMapKeysFound');
+    assert.equal(log.logs[0].args.index.toNumber(), 0);
   });
 });
