@@ -247,7 +247,8 @@ contract('PreSaleCrowdsale', ([owner, investor, wallet, bonusWallet, _]) => {
     const log = await this.crowdsale.deletePreSaleDeal(investorThree);
 
     assert.equal(log.logs[0].event, 'DeletePreSaleDealInvestorsMapKeySkipped');
-    assert.equal(log.logs[1].event, 'InvestorDeleted');
+    assert.equal(log.logs[1].event, 'DeletePreSaleDealInvestorsMapKeysFound');
+    assert.equal(log.logs[2].event, 'InvestorDeleted');
   });
 
   it('deleteInvoice invoice map skip index', async function () {
