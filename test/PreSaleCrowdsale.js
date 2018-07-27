@@ -248,4 +248,8 @@ contract('PreSaleCrowdsale', ([owner, investor, wallet, bonusWallet, _]) => {
     await this.crowdsale.deleteInvoice(investor);
     await expectThrow(this.crowdsale.deleteInvoice(investor));
   });
+
+  it('onlyWhitelisted exception', async function () {
+
+  });
 });

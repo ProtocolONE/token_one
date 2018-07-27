@@ -325,4 +325,14 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
 
     await expectThrow(this.crowdsale.claimTokens.call({from : wallet}));
   });
+
+  it('onlyWhitelisted exception', async function () {
+    const bonusWallet = new web3.BigNumber(1000);
+
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
+
+    await expectThrow(this.crowdsale.buyTokens(investor));
+  });
 });
