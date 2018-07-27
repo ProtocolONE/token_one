@@ -249,7 +249,22 @@ contract('PreSaleCrowdsale', ([owner, investor, wallet, bonusWallet, _]) => {
     await expectThrow(this.crowdsale.deleteInvoice(investor));
   });
 
-  it('onlyWhitelisted exception', async function () {
+  it('deletePreSaleDeal investors map skip index', async function () {
+    const investorTwo = new web3.BigNumber(1000);
+    const walletTwo = new web3.BigNumber(1000);
+    const walletThree = new web3.BigNumber(1000);
+    const investorThree = new web3.BigNumber(1000);
 
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
+    await this.crowdsale.addUpdatePreSaleDeal(investorTwo, walletTwo, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
+    await this.crowdsale.addUpdatePreSaleDeal(investorThree, walletThree, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
+
+    const log = await this.crowdsale.deletePreSaleDeal(investorThree);
+
+    assert.equal(log.logs[0].event, 'DeletePreSaleDealInvestorsMapKeySkipped');
+    assert.equal(log.logs[1].event, 'DeletePreSaleDealInvestorsMapKeysFound');
+    assert.equal(log.logs[2].event, 'InvestorDeleted');
   });
 });
