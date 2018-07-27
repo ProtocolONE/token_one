@@ -227,4 +227,25 @@ contract('PreSaleCrowdsale', ([owner, investor, wallet, bonusWallet, _]) => {
 
     assert.equal(log.logs[0].event, 'InvoiceUpdated');
   });
+
+  it('deleteInvoice exception with 0 wallet', async function () {
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+
+    await this.crowdsale.addUpdateInvoice(investor, tokens, invId);
+    await this.crowdsale.invoicesMap.call(investor);
+
+    await expectThrow(this.crowdsale.deleteInvoice(0));
+  });
+
+  it('deleteInvoice exception with 0 wallet', async function () {
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+
+    await this.crowdsale.addUpdateInvoice(investor, tokens, invId);
+    await this.crowdsale.invoicesMap.call(investor);
+
+    await this.crowdsale.deleteInvoice(investor);
+    await expectThrow(this.crowdsale.deleteInvoice(investor));
+  });
 });
