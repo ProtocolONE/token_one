@@ -267,4 +267,21 @@ contract('PreSaleCrowdsale', ([owner, investor, wallet, bonusWallet, _]) => {
     assert.equal(log.logs[0].event, 'DeleteInvoiceInvoiceMapKeysSkipped');
     assert.equal(log.logs[1].event, 'InvoiceDeleted');
   });
+
+  it('deletePreSaleDeal delete from investorsMapKeys', async function () {
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    let log = await this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
+    assert.equal(log.logs[0].event, 'InvestorAdded');
+
+    log = await this.crowdsale.deletePreSaleDeal(investor);
+
+    assert.equal(log.logs[0].event, 'DeletePreSaleDealInvestorsMapKeysFound');
+    assert.equal(log.logs[0].args.index.toNumber(), 0);
+
+    await this.crowdsale.addFakePreSaleDeal(investor, wallet);
+
+    log = await this.crowdsale.deletePreSaleDeal(investor);
+    assert.notEqual(log.logs[0].event, 'DeletePreSaleDealInvestorsMapKeysFound');
+  });
 });
