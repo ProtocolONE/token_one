@@ -203,4 +203,10 @@ contract('PreSaleCrowdsale', ([owner, investor, wallet, bonusWallet, _]) => {
     log = await this.crowdsale.deletePreSaleDeal(investor);
     assert.notEqual(log.logs[0].event, 'DeletePreSaleDealInvestorsMapKeysFound');
   });
+
+  it('addUpdateInvoice exception with 0 wallet', async function () {
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await expectThrow(this.crowdsale.addUpdateInvoice(0, tokens, invId));
+  });
 });
