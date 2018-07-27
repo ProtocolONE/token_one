@@ -152,17 +152,23 @@ contract PreSaleCrowdsale is Crowdsale {
     
     //delete from the array (keys):
     uint256 index;
+    bool isIndexFound = false;
+
     for (uint256 i = 0; i < investorsMapKeys.length; i++) {
       if (investorsMapKeys[i] == _incomeWallet) {
         index = i;
+
+        isIndexFound = true;
         emit DeletePreSaleDealInvestorsMapKeysFound(index);
         break;
       }
     }
-    
-    investorsMapKeys[index] = investorsMapKeys[investorsMapKeys.length - 1];
-    delete investorsMapKeys[investorsMapKeys.length - 1];
-    investorsMapKeys.length--;
+
+    if (true == isIndexFound) {
+      investorsMapKeys[index] = investorsMapKeys[investorsMapKeys.length - 1];
+      delete investorsMapKeys[investorsMapKeys.length - 1];
+      investorsMapKeys.length--;
+    }
     
     emit InvestorDeleted(_incomeWallet);
   }

@@ -21,7 +21,9 @@ contract PreSaleCrowdsaleMock is PreSaleCrowdsale {
     investorsMap[_wallet].wallet = address(0);
   }
 
-  function getInvestorsMapKeys() constant returns (address[]) {
-    return investorsMapKeys;
+  function addFakePreSaleDeal(address _incomeWallet, address _wallet) {
+    PreSaleConditions storage investor = investorsMap[_incomeWallet];
+
+    investor.wallet = _wallet;
   }
 }
