@@ -3,6 +3,7 @@ import { advanceBlock } from './helpers/advanceToBlock';
 import { increaseTimeTo, duration } from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
 import EVMThrow from './helpers/EVMThrow';
+import expectThrow from './helpers/expectThrow';
 
 const utils = require('./helpers/Utils');
 
@@ -64,6 +65,29 @@ contract('Crowdsale', ([_, investor, wallet, purchaser]) => {
 
     rateFromContract = await this.crowdsale.getRate.call({from : investor});
     assert.equal(rateFromContract, 1001);
+  });
+
+  it('constructor check 1', async function () {
+    let decrBlock = this.startTime - duration.years(1);
+    await expectThrow(Crowdsale.new(decrBlock, this.endTime, rate, softCap, hardCap));
+  });
+
+  it('constructor check 2', async function () {
+    await expectThrow(Crowdsale.new(this.endTime, this.startTime, rate, softCap, hardCap));
+  });
+
+  it('constructor check 3', async function () {
+    await expectThrow(Crowdsale.new(this.startTime, this.endTime, this.rate, hardCap, softCap));
+  });
+
+  it('hardcap check', async function () {
+    let res = await this.crowdsale.hardCapReached.call();
+    assert.equal(res, false);
+  });
+
+  it('soft check', async function () {
+    let res = await this.crowdsale.softCapReached.call();
+    assert.equal(res, false);
   });
 
 });
