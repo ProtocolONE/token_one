@@ -37,7 +37,7 @@ contract PreSaleCrowdsale is Crowdsale {
   
   event KYCUpdated(address indexed _grantee, bool _oldValue, bool _value);
 
-  event DeletePreSaleDealInvestorsMapKeysFound(uint256 index);
+  event DeleteInvoiceInvoiceMapKeysSkipped();
   event DeletePreSaleDealInvestorsMapKeySkipped();
  
   modifier onlyKYCPassed() {
@@ -158,9 +158,8 @@ contract PreSaleCrowdsale is Crowdsale {
     for (uint256 i = 0; i < investorsMapKeys.length; i++) {
       if (investorsMapKeys[i] == _incomeWallet) {
         index = i;
-
         isIndexFound = true;
-        emit DeletePreSaleDealInvestorsMapKeysFound(index);
+
         break;
       } else {
         emit DeletePreSaleDealInvestorsMapKeySkipped();
@@ -227,6 +226,8 @@ contract PreSaleCrowdsale is Crowdsale {
       if (invoiceMapKeys[i] == _wallet) {
         index = i;
         break;
+      } else {
+        emit DeleteInvoiceInvoiceMapKeysSkipped();
       }
     }    
     

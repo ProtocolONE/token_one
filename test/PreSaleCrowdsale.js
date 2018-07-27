@@ -187,23 +187,6 @@ contract('PreSaleCrowdsale', ([owner, investor, wallet, bonusWallet, _]) => {
     await expectThrow(this.crowdsale.deletePreSaleDeal(investor));
   });
 
-  it('deletePreSaleDeal delete from investorsMapKeys', async function () {
-    await increaseTimeTo(this.startTime);
-    await this.crowdsale.addAdmin(owner);
-    let log = await this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
-    assert.equal(log.logs[0].event, 'InvestorAdded');
-
-    log = await this.crowdsale.deletePreSaleDeal(investor);
-
-    assert.equal(log.logs[0].event, 'DeletePreSaleDealInvestorsMapKeysFound');
-    assert.equal(log.logs[0].args.index.toNumber(), 0);
-
-    await this.crowdsale.addFakePreSaleDeal(investor, wallet);
-
-    log = await this.crowdsale.deletePreSaleDeal(investor);
-    assert.notEqual(log.logs[0].event, 'DeletePreSaleDealInvestorsMapKeysFound');
-  });
-
   it('addUpdateInvoice exception with 0 wallet', async function () {
     await increaseTimeTo(this.startTime);
     await this.crowdsale.addAdmin(owner);
@@ -264,7 +247,24 @@ contract('PreSaleCrowdsale', ([owner, investor, wallet, bonusWallet, _]) => {
     const log = await this.crowdsale.deletePreSaleDeal(investorThree);
 
     assert.equal(log.logs[0].event, 'DeletePreSaleDealInvestorsMapKeySkipped');
-    assert.equal(log.logs[1].event, 'DeletePreSaleDealInvestorsMapKeysFound');
-    assert.equal(log.logs[2].event, 'InvestorDeleted');
+    assert.equal(log.logs[1].event, 'InvestorDeleted');
+  });
+
+  it('deleteInvoice invoice map skip index', async function () {
+    const investorTwo = new web3.BigNumber(1000);
+    const investorTwoId = '3CB928E14AA3DA54C1ECC0E5FE6EAEA9';
+    const investorThree = new web3.BigNumber(1000);
+    const investorThreeId = '999064E4C374B20168DE09B94692E4DA';
+
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await this.crowdsale.addUpdateInvoice(investor, tokens, invId);
+    await this.crowdsale.addUpdateInvoice(investorTwo, tokens, investorTwoId);
+    await this.crowdsale.addUpdateInvoice(investorThree, tokens, investorThreeId);
+
+    const log = await this.crowdsale.deleteInvoice(investorThree);
+
+    assert.equal(log.logs[0].event, 'DeleteInvoiceInvoiceMapKeysSkipped');
+    assert.equal(log.logs[1].event, 'InvoiceDeleted');
   });
 });
