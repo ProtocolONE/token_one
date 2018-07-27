@@ -209,4 +209,22 @@ contract('PreSaleCrowdsale', ([owner, investor, wallet, bonusWallet, _]) => {
     await this.crowdsale.addAdmin(owner);
     await expectThrow(this.crowdsale.addUpdateInvoice(0, tokens, invId));
   });
+
+  it('addUpdateInvoice exception with 0 tokens', async function () {
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await expectThrow(this.crowdsale.addUpdateInvoice(investor, 0, invId));
+  });
+
+  it('addUpdateInvoice update invoice', async function () {
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    let log = await this.crowdsale.addUpdateInvoice(investor, tokens, invId);
+
+    assert.equal(log.logs[0].event, 'InvoiceAdded');
+
+    log = await this.crowdsale.addUpdateInvoice(investor, tokens, invId);
+
+    assert.equal(log.logs[0].event, 'InvoiceUpdated');
+  });
 });
