@@ -18,8 +18,6 @@ contract('OneSmartToken', (accounts) => {
   it('should start with a totalSupply of 0', async () => {
     const totalSupply = await token.totalSupply();
 
-    console.log(totalSupply);
-
     assert.equal(totalSupply, 0);
   });
 
