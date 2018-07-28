@@ -97,8 +97,8 @@ contract('OneSmartToken', (accounts) => {
     const accountOneEndingBalance = await token.balanceOf(accounts[0]);
     const accountTwoEndingBalance = await token.balanceOf(accounts[1]);
 
-    assert.equal(accountOneEndingBalance.toNumber(), accountOneStartingBalance - amount);
-    assert.equal(accountTwoEndingBalance.toNumber(), accountTwoStartingBalance + amount);
+    assert.equal(Number(accountOneEndingBalance), accountOneStartingBalance - amount);
+    assert.equal(Number(accountTwoEndingBalance), accountTwoStartingBalance + amount);
   });
 
   it('should burn coins correctly', async () => {
