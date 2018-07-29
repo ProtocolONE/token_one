@@ -477,4 +477,17 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
     await this.crowdsale.finishCrowdsale();
     await expectThrow(this.crowdsale.finishCrowdsale());
   });
+
+  it('finishCrowdsale with invoices', async function () {
+    const tokens = new web3.BigNumber(1000);
+    const invId = "somedInvoiceId";
+
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await this.crowdsale.addUpdateInvoice(investor, tokens, invId);
+
+    await increaseTimeTo(this.afterEndTime);
+    let res = await this.crowdsale.finishCrowdsale();
+    assert.equal(res.logs[1].event, "CrowdsakeFinished");
+  });
 });
