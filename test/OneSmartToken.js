@@ -156,8 +156,8 @@ contract('OneSmartToken', (accounts) => {
     result = await token.transferFrom(accounts[0], accounts[1], amount);
     assert.equal(result.logs[0].event, 'Transfer');
 
-    const accountOneEndingBalance = (await token.balanceOf(accounts[0])).toNumber();
-    const accountTwoEndingBalance = (await token.balanceOf(accounts[1])).toNumber();
+    const accountOneEndingBalance = (await token.balanceOf.call(accounts[0])).toNumber();
+    const accountTwoEndingBalance = (await token.balanceOf.call(accounts[1])).toNumber();
 
     assert.equal(accountOneEndingBalance, accountOneStartingBalance - amount);
     assert.equal(accountTwoEndingBalance, accountTwoStartingBalance + amount);

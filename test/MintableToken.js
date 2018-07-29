@@ -10,7 +10,7 @@ contract('Mintable', (accounts) => {
   });
 
   it('should start with a totalSupply of 0', async () => {
-    const totalSupply = await token.totalSupply();
+    const totalSupply = await token.totalSupply.call();
 
     assert.equal(totalSupply, 0);
   });
