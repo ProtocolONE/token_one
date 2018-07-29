@@ -16,7 +16,7 @@ contract('OneSmartToken', (accounts) => {
   });
 
   it('should start with a totalSupply of 0', async () => {
-    const totalSupply = await token.totalSupply();
+    const totalSupply = await token.totalSupply.call();
 
     assert.equal(totalSupply, 0);
   });
@@ -113,12 +113,12 @@ contract('OneSmartToken', (accounts) => {
     result = await token.transfer(accounts[0], amount);
     assert.equal(result.logs[0].event, 'Transfer');
 
-    const accountStartingBalance = await token.balanceOf(accounts[0]);
+    const accountStartingBalance = await token.balanceOf.call(accounts[0]);
 
     result = await token.burn(accounts[0], burnAmount);
     assert.equal(result.logs[0].event, 'Burn');
 
-    const accountEndingBalance = await token.balanceOf(accounts[0]);
+    const accountEndingBalance = await token.balanceOf.call(accounts[0]);
 
     assert.equal(accountStartingBalance.toNumber(), amount);
     assert.equal(accountEndingBalance.toNumber(), accountStartingBalance - burnAmount);
@@ -147,8 +147,8 @@ contract('OneSmartToken', (accounts) => {
     let result = await token.unlock();
     assert.equal(result.logs[0].event, 'Unlocked');
 
-    const accountOneStartingBalance = (await token.balanceOf(accounts[0])).toNumber();
-    const accountTwoStartingBalance = (await token.balanceOf(accounts[1])).toNumber();
+    const accountOneStartingBalance = (await token.balanceOf.call(accounts[0])).toNumber();
+    const accountTwoStartingBalance = (await token.balanceOf.call(accounts[1])).toNumber();
 
     result = await token.approve(accounts[0], amount);
     assert.equal(result.logs[0].event, 'Approval');
@@ -190,8 +190,8 @@ contract('OneSmartToken', (accounts) => {
 
     await token.mint(accounts[0], amount);
 
-    const accountOneStartingBalance = (await token.balanceOf(accounts[0])).toNumber();
-    const accountTwoStartingBalance = (await token.balanceOf(accounts[1])).toNumber();
+    const accountOneStartingBalance = (await token.balanceOf.call(accounts[0])).toNumber();
+    const accountTwoStartingBalance = (await token.balanceOf.call(accounts[1])).toNumber();
 
     let result = await token.unlock();
     assert.equal(result.logs[0].event, 'Unlocked');
@@ -207,8 +207,8 @@ contract('OneSmartToken', (accounts) => {
     result = await token.transferFrom(accounts[0], accounts[1], transferAmount);
     assert.equal(result.logs[0].event, 'Transfer');
 
-    const accountOneEndingBalance = (await token.balanceOf(accounts[0])).toNumber();
-    const accountTwoEndingBalance = (await token.balanceOf(accounts[1])).toNumber();
+    const accountOneEndingBalance = (await token.balanceOf.call(accounts[0])).toNumber();
+    const accountTwoEndingBalance = (await token.balanceOf.call(accounts[1])).toNumber();
 
     assert.equal(accountOneEndingBalance, accountOneStartingBalance - transferAmount);
     assert.equal(accountTwoEndingBalance, accountTwoStartingBalance + transferAmount);
