@@ -85,8 +85,8 @@ contract('OneSmartToken', (accounts) => {
 
     await token.mint(accounts[0], amount);
 
-    const accountOneStartingBalance = await token.balanceOf(accounts[0]);
-    const accountTwoStartingBalance = await token.balanceOf(accounts[1]);
+    const accountOneStartingBalance = await token.balanceOf.call(accounts[0]);
+    const accountTwoStartingBalance = await token.balanceOf.call(accounts[1]);
 
     let result = await token.unlock();
     assert.equal(result.logs[0].event, 'Unlocked');
