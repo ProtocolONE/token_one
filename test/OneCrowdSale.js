@@ -468,4 +468,7 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
     assert.equal(r, 0);
   });
 
+  it('finishCrowdsale exception 1', async function () {
+    await expectThrow(this.crowdsale.finishCrowdsale());
+  });
 });
