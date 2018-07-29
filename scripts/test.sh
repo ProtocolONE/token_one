@@ -41,8 +41,8 @@ start_ganache() {
   sed -i -e 's/norpc: false/norpc: true/g' .solcover.js
 
   if [ "$SOLIDITY_COVERAGE" = true ]; then
-    # node_modules/.bin/testrpc-sc --gasLimit 0xfffffffffff --port "$ganache_port" "${accounts[@]}" > /dev/null &
-    node_modules/.bin/ganache-cli -g 1 --gasLimit 10000000000000 --port "$ganache_port" "${accounts[@]}" > /dev/null &
+    node_modules/.bin/testrpc-sc --gasLimit 0xfffffffffff --port "$ganache_port" "${accounts[@]}" > /dev/null &
+    # node_modules/.bin/ganache-cli -g 1 --gasLimit 10000000000000 --port "$ganache_port" "${accounts[@]}" > /dev/null &
   else
     node_modules/.bin/ganache-cli --gasLimit 0xfffffffffff "${accounts[@]}" > /dev/null &
   fi
