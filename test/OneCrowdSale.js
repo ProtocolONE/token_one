@@ -374,7 +374,7 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
 
     await increaseTimeTo(this.startTime + duration.days(40));
 
-    let r = await this.crowdsaleMock.getBonusRateMocked(investor);
+    let r = await this.crowdsaleMock.getBonusRateMocked.call(investor);
     assert.equal(r, 50);
   });
 
@@ -384,7 +384,7 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
 
     await increaseTimeTo(this.startTime + duration.days(70));
 
-    let r = await this.crowdsaleMock.getBonusRateMocked(investor);
+    let r = await this.crowdsaleMock.getBonusRateMocked.call(investor);
     assert.equal(r, 40);
   });
 
@@ -394,7 +394,7 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
 
     await increaseTimeTo(this.startTime + duration.days(120));
 
-    let r = await this.crowdsaleMock.getBonusRateMocked(investor);
+    let r = await this.crowdsaleMock.getBonusRateMocked.call(investor);
     assert.equal(r, 30);
   });
 
@@ -404,7 +404,7 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
 
     await increaseTimeTo(this.startTime + duration.days(150));
 
-    let r = await this.crowdsaleMock.getBonusRateMocked(investor);
+    let r = await this.crowdsaleMock.getBonusRateMocked.call(investor);
     assert.equal(r, 20);
   });
 
@@ -414,7 +414,7 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
 
     await increaseTimeTo(this.startTime + duration.days(210));
 
-    let r = await this.crowdsaleMock.getBonusRateMocked(investor);
+    let r = await this.crowdsaleMock.getBonusRateMocked.call(investor);
     assert.equal(r, 10);
   });
 
@@ -424,7 +424,7 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
 
     await increaseTimeTo(this.startTime + duration.days(215));
 
-    let r = await this.crowdsaleMock.getBonusRateMocked(investor);
+    let r = await this.crowdsaleMock.getBonusRateMocked.call(investor);
     assert.equal(r, 8);
   });
 
@@ -434,7 +434,7 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
 
     await increaseTimeTo(this.startTime + duration.days(217));
 
-    let r = await this.crowdsaleMock.getBonusRateMocked(investor);
+    let r = await this.crowdsaleMock.getBonusRateMocked.call(investor);
     assert.equal(r, 6);
   });
 
@@ -444,7 +444,7 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
 
     await increaseTimeTo(this.startTime + duration.days(222));
 
-    let r = await this.crowdsaleMock.getBonusRateMocked(investor);
+    let r = await this.crowdsaleMock.getBonusRateMocked.call(investor);
     assert.equal(r, 4);
   });
 
@@ -454,7 +454,7 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
 
     await increaseTimeTo(this.startTime + duration.days(226));
 
-    let r = await this.crowdsaleMock.getBonusRateMocked(investor);
+    let r = await this.crowdsaleMock.getBonusRateMocked.call(investor);
     assert.equal(r, 2);
   });
 
@@ -464,7 +464,7 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
 
     await increaseTimeTo(this.startTime + duration.days(230));
 
-    let r = await this.crowdsaleMock.getBonusRateMocked(investor);
+    let r = await this.crowdsaleMock.getBonusRateMocked.call(investor);
     assert.equal(r, 0);
   });
 
