@@ -38,7 +38,7 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
 
   beforeEach(async function () {
     this.startTime = latestTime() + duration.weeks(1);
-    this.endTime = this.startTime + duration.weeks(1);
+    this.endTime = this.startTime + duration.years(1);
     this.afterEndTime = this.endTime + duration.seconds(1);
 
     this.bonusRateTime = this.startTime + duration.minutes(1);
@@ -338,8 +338,6 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
   });
 
   it('addDeposit exception 1', async function () {
-    const bonusWallet = new web3.BigNumber(1000);
-
     this.crowdsaleMock = await CrowdsaleMock.new(wallet, walletTeam, walletAdvisers, walletOperating, walletReserve, walletBounty, 
       this.startTime, this.endTime, softCap, hardCap);
 
@@ -347,8 +345,6 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
   });
 
   it('addDeposit exception 2', async function () {
-    const bonusWallet = new web3.BigNumber(1000);
-
     this.crowdsaleMock = await CrowdsaleMock.new(wallet, walletTeam, walletAdvisers, walletOperating, walletReserve, walletBounty, 
       this.startTime, this.endTime, softCap, hardCap);
 
@@ -356,12 +352,120 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
   });
 
   it('addDeposit exception 3', async function () {
-    const bonusWallet = new web3.BigNumber(1000);
-
     this.crowdsaleMock = await CrowdsaleMock.new(wallet, walletTeam, walletAdvisers, walletOperating, walletReserve, walletBounty, 
       this.startTime, this.endTime, softCap, hardCap);
 
     await expectThrow(this.crowdsaleMock.addDepositMock(investor, wallet, 10, 0));
+  });
+
+  it('rate check 1', async function () {
+    this.crowdsaleMock = await CrowdsaleMock.new(wallet, walletTeam, walletAdvisers, walletOperating, walletReserve, walletBounty, 
+      this.startTime, this.endTime, softCap, hardCap);
+
+    await increaseTimeTo(this.startTime + duration.days(1));
+
+    let r = await this.crowdsaleMock.getBonusRateMocked.call(investor);
+    assert.equal(r, 60);
+  });
+
+  it('rate check 2', async function () {
+    this.crowdsaleMock = await CrowdsaleMock.new(wallet, walletTeam, walletAdvisers, walletOperating, walletReserve, walletBounty, 
+      this.startTime, this.endTime, softCap, hardCap);
+
+    await increaseTimeTo(this.startTime + duration.days(40));
+
+    let r = await this.crowdsaleMock.getBonusRateMocked(investor);
+    assert.equal(r, 50);
+  });
+
+  it('rate check 3', async function () {
+    this.crowdsaleMock = await CrowdsaleMock.new(wallet, walletTeam, walletAdvisers, walletOperating, walletReserve, walletBounty, 
+      this.startTime, this.endTime, softCap, hardCap);
+
+    await increaseTimeTo(this.startTime + duration.days(70));
+
+    let r = await this.crowdsaleMock.getBonusRateMocked(investor);
+    assert.equal(r, 40);
+  });
+
+  it('rate check 4', async function () {
+    this.crowdsaleMock = await CrowdsaleMock.new(wallet, walletTeam, walletAdvisers, walletOperating, walletReserve, walletBounty, 
+      this.startTime, this.endTime, softCap, hardCap);
+
+    await increaseTimeTo(this.startTime + duration.days(120));
+
+    let r = await this.crowdsaleMock.getBonusRateMocked(investor);
+    assert.equal(r, 30);
+  });
+
+  it('rate check 5', async function () {
+    this.crowdsaleMock = await CrowdsaleMock.new(wallet, walletTeam, walletAdvisers, walletOperating, walletReserve, walletBounty, 
+      this.startTime, this.endTime, softCap, hardCap);
+
+    await increaseTimeTo(this.startTime + duration.days(150));
+
+    let r = await this.crowdsaleMock.getBonusRateMocked(investor);
+    assert.equal(r, 20);
+  });
+
+  it('rate check 6', async function () {
+    this.crowdsaleMock = await CrowdsaleMock.new(wallet, walletTeam, walletAdvisers, walletOperating, walletReserve, walletBounty, 
+      this.startTime, this.endTime, softCap, hardCap);
+
+    await increaseTimeTo(this.startTime + duration.days(210));
+
+    let r = await this.crowdsaleMock.getBonusRateMocked(investor);
+    assert.equal(r, 10);
+  });
+
+  it('rate check 7', async function () {
+    this.crowdsaleMock = await CrowdsaleMock.new(wallet, walletTeam, walletAdvisers, walletOperating, walletReserve, walletBounty, 
+      this.startTime, this.endTime, softCap, hardCap);
+
+    await increaseTimeTo(this.startTime + duration.days(215));
+
+    let r = await this.crowdsaleMock.getBonusRateMocked(investor);
+    assert.equal(r, 8);
+  });
+
+  it('rate check 8', async function () {
+    this.crowdsaleMock = await CrowdsaleMock.new(wallet, walletTeam, walletAdvisers, walletOperating, walletReserve, walletBounty, 
+      this.startTime, this.endTime, softCap, hardCap);
+
+    await increaseTimeTo(this.startTime + duration.days(217));
+
+    let r = await this.crowdsaleMock.getBonusRateMocked(investor);
+    assert.equal(r, 6);
+  });
+
+  it('rate check 9', async function () {
+    this.crowdsaleMock = await CrowdsaleMock.new(wallet, walletTeam, walletAdvisers, walletOperating, walletReserve, walletBounty, 
+      this.startTime, this.endTime, softCap, hardCap);
+
+    await increaseTimeTo(this.startTime + duration.days(222));
+
+    let r = await this.crowdsaleMock.getBonusRateMocked(investor);
+    assert.equal(r, 4);
+  });
+
+  it('rate check 10', async function () {
+    this.crowdsaleMock = await CrowdsaleMock.new(wallet, walletTeam, walletAdvisers, walletOperating, walletReserve, walletBounty, 
+      this.startTime, this.endTime, softCap, hardCap);
+
+    await increaseTimeTo(this.startTime + duration.days(226));
+
+    let r = await this.crowdsaleMock.getBonusRateMocked(investor);
+    assert.equal(r, 2);
+  });
+
+  it('rate check 11', async function () {
+    this.crowdsaleMock = await CrowdsaleMock.new(wallet, walletTeam, walletAdvisers, walletOperating, walletReserve, walletBounty, 
+      this.startTime, this.endTime, softCap, hardCap);
+
+    await increaseTimeTo(this.startTime + duration.days(230));
+
+    let r = await this.crowdsaleMock.getBonusRateMocked(investor);
+    assert.equal(r, 0);
   });
 
 });

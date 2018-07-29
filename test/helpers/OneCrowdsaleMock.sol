@@ -30,7 +30,8 @@ contract OneCrowdsaleMock is OneCrowdsale {
     addDeposit(_refundWallet, _wallet, _wei, _tokens);
   }
 
-  function getBonusRateMocked(address _benefic) {
-    getBonusRate(_benefic);
+  function getBonusRateMocked(address _benefic) public view returns (uint256) {
+    uint256 bRate = getBonusRate(_benefic);
+    return bRate;
   }
 }
