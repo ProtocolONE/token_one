@@ -611,4 +611,35 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
 
     await expectThrow(this.crowdsale.claimTokens.call({from : wallet}));
   });
+
+  it('claimtokens cover cliff 1', async function () {
+    // Adding deal to register
+    const bonusWallet = new web3.BigNumber(1000);
+
+    const mainCliffTime = duration.days(30);
+    const mainCliffAmount = new web3.BigNumber(80); 
+    const additionalCliffAmount = new web3.BigNumber(10);
+    const additionalCliffTime = duration.days(40);
+
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await this.crowdsale.assignDepositTimeLock(investor, mainCliffAmount, mainCliffTime, additionalCliffAmount, additionalCliffTime);
+    await this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
+
+    // Sending transaction to buy tokens
+    let result = await this.crowdsale.sendTransaction({ value: 1001, from: investor })
+    assert.equal(result.logs[0].event, 'DepositAdded');    
+    let item = await this.crowdsale.investorsMap.call(investor);
+    assert.equal(item[0], wallet);
+    
+    // Updating kyc
+    await this.crowdsale.updateInvestorKYC(wallet, true);
+
+    // Finishing
+    await increaseTimeTo(this.afterEndTime);    
+    let resultFinish = await this.crowdsale.finishCrowdsale();
+    assert.equal(resultFinish.logs[0].event, 'CrowdsakeFinished');
+
+    await this.crowdsale.claimTokens.call({from : wallet});
+  });
 });
