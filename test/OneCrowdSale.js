@@ -612,7 +612,7 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
     await expectThrow(this.crowdsale.claimTokens.call({from : wallet}));
   });
 
-  it('claimtokens cover maincliff', async function () {
+  it('claimtokens cover main cliff', async function () {
     // Adding deal to register
     const bonusWallet = new web3.BigNumber(1000);
 
@@ -623,7 +623,7 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
 
     await increaseTimeTo(this.startTime);
     await this.crowdsale.addAdmin(owner);
-    await this.crowdsale.assignDepositTimeLock(investor, mainCliffAmount, mainCliffTime, additionalCliffAmount, additionalCliffTime);
+    await this.crowdsale.assignDepositTimeLock(wallet, mainCliffAmount, mainCliffTime, additionalCliffAmount, additionalCliffTime);
     await this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
 
     // Sending transaction to buy tokens
@@ -636,14 +636,17 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
     await this.crowdsale.updateInvestorKYC(wallet, true);
 
     // Finishing
-    await increaseTimeTo(this.afterEndTime);    
+    await increaseTimeTo(this.afterEndTime);
     let resultFinish = await this.crowdsale.finishCrowdsale();
     assert.equal(resultFinish.logs[0].event, 'CrowdsakeFinished');
 
+    const dateClif = this.afterEndTime + duration.days(10);
+
+    await increaseTimeTo(dateClif);
     await this.crowdsale.claimTokens.call({from : wallet});
   });
 
-  it('claimtokens cover additionalcliff', async function () {
+  it('claimtokens cover additional cliff', async function () {
     // Adding deal to register
     const bonusWallet = new web3.BigNumber(1000);
 
@@ -654,7 +657,7 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
 
     await increaseTimeTo(this.startTime);
     await this.crowdsale.addAdmin(owner);
-    await this.crowdsale.assignDepositTimeLock(investor, mainCliffAmount, mainCliffTime, additionalCliffAmount, additionalCliffTime);
+    await this.crowdsale.assignDepositTimeLock(wallet, mainCliffAmount, mainCliffTime, additionalCliffAmount, additionalCliffTime);
     await this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
 
     // Sending transaction to buy tokens
@@ -667,10 +670,13 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
     await this.crowdsale.updateInvestorKYC(wallet, true);
 
     // Finishing
-    await increaseTimeTo(this.afterEndTime + duration.days(50));    
+    await increaseTimeTo(this.afterEndTime);
     let resultFinish = await this.crowdsale.finishCrowdsale();
     assert.equal(resultFinish.logs[0].event, 'CrowdsakeFinished');
 
+    const dateClif = this.afterEndTime + duration.days(35);
+
+    await increaseTimeTo(dateClif);
     await this.crowdsale.claimTokens.call({from : wallet});
   });
 });

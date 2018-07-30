@@ -355,7 +355,7 @@ function assignDepositTimeLock(
     require(deposit.depositedTokens > 0);
 
     DepositTimeLock storage timeLock = depositTimeLockMap[investor];
-    
+
     uint256 depositedToken = deposit.depositedTokens;
   
     uint256 vested;
