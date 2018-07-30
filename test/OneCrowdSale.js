@@ -127,6 +127,16 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
     assert.equal(resultBack.logs[0].event, 'RefundedDeposit');    
   });
 
+  it('refund deposit catch 1', async function () {
+    // Adding deal to register
+    const bonusWallet = new web3.BigNumber(1000);
+
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+
+    await expectThrow(this.crowdsale.refundDeposit(wallet));
+  });
+
   it('finish crowdsale', async function () {
     // Adding deal to register
     const bonusWallet = new web3.BigNumber(1000);

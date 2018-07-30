@@ -327,7 +327,6 @@ function assignDepositTimeLock(
     require(deposit.depositedTokens > 0);
 
     uint256 refundTokens = deposit.depositedTokens;
-    require(refundTokens > 0);
 
     deposit.depositedTokens = 0;
 
