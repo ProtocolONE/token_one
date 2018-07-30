@@ -523,10 +523,10 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
   });
 
   it('assignDepositTimeLock exception with mainCliffTime greater than additionalCliffTime', async function () {
-    const mainCliffTime = new web3.BigNumber(20);
-    const mainCliffAmount = new web3.BigNumber(101);
+    const mainCliffTime = new web3.BigNumber(90);
+    const mainCliffAmount = new web3.BigNumber(30);
     const additionalCliffAmount = new web3.BigNumber(10);
-    const additionalCliffTime = new web3.BigNumber(90);
+    const additionalCliffTime = new web3.BigNumber(20);
 
     await increaseTimeTo(this.startTime);
     await this.crowdsale.addAdmin(owner);
