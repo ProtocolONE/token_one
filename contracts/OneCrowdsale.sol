@@ -86,6 +86,8 @@ contract OneCrowdsale is PreSaleCrowdsale {
   event CrowdsakeFinished();
   event TokenLocked();
   event TokenUnlocked();
+
+  event AdditionalCliffTimeGreaterThanZero();
   
   /***********************************************************************/
   /**                              Members
@@ -289,6 +291,8 @@ function assignDepositTimeLock(
     if (_additionalCliffTime > 0) {
       require(_additionalCliffTime > _mainCliffTime);
       require(_mainCliffAmount.add(_additionalCliffAmount) < 100);
+    } else {
+      emit AdditionalCliffTimeGreaterThanZero();
     }
     
     DepositTimeLock storage timeLock = depositTimeLockMap[_wallet];

@@ -533,14 +533,24 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
     await expectThrow(this.crowdsale.assignDepositTimeLock(investor, mainCliffAmount, mainCliffTime, additionalCliffAmount, additionalCliffTime));
   });
 
-  it('assignDepositTimeLock exception with sum mainCliffTime and additionalCliffTime greater than 100', async function () {
+  it('assignDepositTimeLock exception with sum mainCliffAmount and additionalCliffAmount greater than 100', async function () {
     const mainCliffTime = new web3.BigNumber(20);
-    const mainCliffAmount = new web3.BigNumber(101);
+    const mainCliffAmount = new web3.BigNumber(20);
     const additionalCliffAmount = new web3.BigNumber(90);
     const additionalCliffTime = new web3.BigNumber(90);
 
     await increaseTimeTo(this.startTime);
     await this.crowdsale.addAdmin(owner);
     await expectThrow(this.crowdsale.assignDepositTimeLock(investor, mainCliffAmount, mainCliffTime, additionalCliffAmount, additionalCliffTime));
+  });
+
+  it('assignDepositTimeLock event AdditionalCliffTimeGreaterThanZero', async function () {
+    const mainCliffTime = new web3.BigNumber(80);
+    const mainCliffAmount = new web3.BigNumber(80);
+
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    const log = await this.crowdsale.assignDepositTimeLock(investor, mainCliffAmount, mainCliffTime, 0, 0);
+    assert.equal(log.logs[0].event, 'AdditionalCliffTimeGreaterThanZero');
   });
 });
