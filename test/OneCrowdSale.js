@@ -490,4 +490,57 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
     let res = await this.crowdsale.finishCrowdsale();
     assert.equal(res.logs[1].event, "CrowdsakeFinished");
   });
+
+  it('assignDepositTimeLock exception with 0 wallet', async function () {
+    const mainCliffTime = new web3.BigNumber(80);
+    const mainCliffAmount = new web3.BigNumber(80);
+    const additionalCliffAmount = new web3.BigNumber(10);
+    const additionalCliffTime = new web3.BigNumber(90);
+
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await expectThrow(this.crowdsale.assignDepositTimeLock(0, mainCliffAmount, mainCliffTime, additionalCliffAmount, additionalCliffTime));
+  });
+
+  it('assignDepositTimeLock exception with 0 mainCliffTime', async function () {
+    const mainCliffAmount = new web3.BigNumber(80);
+    const additionalCliffAmount = new web3.BigNumber(10);
+    const additionalCliffTime = new web3.BigNumber(90);
+
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await expectThrow(this.crowdsale.assignDepositTimeLock(investor, mainCliffAmount, 0, additionalCliffAmount, additionalCliffTime));
+  });
+
+  it('assignDepositTimeLock exception with 0 mainCliffAmount', async function () {
+    const mainCliffTime = new web3.BigNumber(80);
+    const additionalCliffAmount = new web3.BigNumber(10);
+    const additionalCliffTime = new web3.BigNumber(90);
+
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await expectThrow(this.crowdsale.assignDepositTimeLock(investor, 0, mainCliffTime, additionalCliffAmount, additionalCliffTime));
+  });
+
+  it('assignDepositTimeLock exception with mainCliffTime greater than additionalCliffTime', async function () {
+    const mainCliffTime = new web3.BigNumber(20);
+    const mainCliffAmount = new web3.BigNumber(101);
+    const additionalCliffAmount = new web3.BigNumber(10);
+    const additionalCliffTime = new web3.BigNumber(90);
+
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await expectThrow(this.crowdsale.assignDepositTimeLock(investor, mainCliffAmount, mainCliffTime, additionalCliffAmount, additionalCliffTime));
+  });
+
+  it('assignDepositTimeLock exception with sum mainCliffTime and additionalCliffTime greater than 100', async function () {
+    const mainCliffTime = new web3.BigNumber(20);
+    const mainCliffAmount = new web3.BigNumber(101);
+    const additionalCliffAmount = new web3.BigNumber(90);
+    const additionalCliffTime = new web3.BigNumber(90);
+
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await expectThrow(this.crowdsale.assignDepositTimeLock(investor, mainCliffAmount, mainCliffTime, additionalCliffAmount, additionalCliffTime));
+  });
 });
