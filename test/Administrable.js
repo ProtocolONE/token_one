@@ -1,3 +1,5 @@
+import expectThrow from './helpers/expectThrow';
+
 const Administrable = artifacts.require('../contracts/ownership/Administrable.sol');
 
 contract('Administrable', (accounts) => {
@@ -11,6 +13,14 @@ contract('Administrable', (accounts) => {
     await admin.addAdmin(accounts[1]);
     const accAdmin = await admin.admins.call(accounts[1]);
     assert.equal(accAdmin, true);
+  });
+
+  it('add admin catch 1', async () => {
+    await expectThrow(admin.addAdmin(0));
+  });
+
+  it('remove admin catch 1', async () => {
+    await expectThrow(admin.removeAdmin(0));
   });
 
   it('delete admin', async () => {
