@@ -327,7 +327,6 @@ function assignDepositTimeLock(
     require(deposit.depositedTokens > 0);
 
     uint256 refundTokens = deposit.depositedTokens;
-    require(refundTokens > 0);
 
     deposit.depositedTokens = 0;
 
@@ -355,13 +354,13 @@ function assignDepositTimeLock(
     require(deposit.depositedTokens > 0);
 
     DepositTimeLock storage timeLock = depositTimeLockMap[investor];
-    
+
     uint256 depositedToken = deposit.depositedTokens;
   
     uint256 vested;
-    if (timeLock.mainCliffTime > 0 && finalizedTime.add(timeLock.mainCliffTime) <= now) {
+    if (timeLock.mainCliffTime > 0 && finalizedTime.add(timeLock.mainCliffTime) >= now) {
       vested = depositedToken.mul(timeLock.mainCliffAmount).div(100);
-    } else if (timeLock.additionalCliffTime > 0 && finalizedTime.add(timeLock.additionalCliffTime) <= now) {
+    } else if (timeLock.additionalCliffTime > 0 && finalizedTime.add(timeLock.additionalCliffTime) >= now) {
       uint256 totalCliff = timeLock.mainCliffAmount.add(timeLock.additionalCliffAmount);
       vested = depositedToken.mul(totalCliff).div(100);
     } else {
