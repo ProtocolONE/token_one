@@ -358,9 +358,13 @@ function assignDepositTimeLock(
     uint256 depositedToken = deposit.depositedTokens;
   
     uint256 vested;
+
+    // First time range
     if (timeLock.mainCliffTime > 0 && finalizedTime.add(timeLock.mainCliffTime) >= now) {
       vested = depositedToken.mul(timeLock.mainCliffAmount).div(100);
-    } else if (timeLock.additionalCliffTime > 0 && finalizedTime.add(timeLock.additionalCliffTime) >= now) {
+    } else if (timeLock.additionalCliffTime > 0 && finalizedTime.add(timeLock.mainCliffTime) < now && 
+      finalizedTime.add(timeLock.additionalCliffTime) >= now) {
+      // Second time range
       uint256 totalCliff = timeLock.mainCliffAmount.add(timeLock.additionalCliffAmount);
       vested = depositedToken.mul(totalCliff).div(100);
     } else {
