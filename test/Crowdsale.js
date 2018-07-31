@@ -90,4 +90,14 @@ contract('Crowdsale', ([_, investor, wallet, purchaser]) => {
     assert.equal(res, false);
   });
 
+  it('create instance exception 0 softCap', async function () {
+    await expectThrow(Crowdsale.new(this.startTime, this.endTime, rate, 0, hardCap));
+  });
+
+  it('create instance exception softCap greater than hardCap', async function () {
+    const tSoftCap = new BigNumber(5000);
+    const tHardCap = new BigNumber(2000);
+
+    await expectThrow(Crowdsale.new(this.startTime, this.endTime, rate, tSoftCap, tHardCap));
+  });
 });

@@ -579,13 +579,28 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
   it('refundDeposit exception with 0 depositedTokens', async function () {
     const bonusWallet = new web3.BigNumber(1000);
 
-    await increaseTimeTo(this.startTime);
-    await this.crowdsale.addAdmin(owner);
-    await this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
+    let crowdsaleMock = await CrowdsaleMock.new(
+        wallet,
+        walletTeam,
+        walletAdvisers,
+        walletOperating,
+        walletReserve,
+        walletBounty,
+        this.startTime,
+        this.endTime,
+        softCap,
+        hardCap
+    );
 
-     await this.crowdsale.sendTransaction({ value: 1001, from: investor })
-     await this.crowdsale.sendTransaction({ value: 0, from: wallet })
-     await expectThrow(this.crowdsale.refundDeposit(wallet));
+    await increaseTimeTo(this.startTime);
+    await crowdsaleMock.addAdmin(owner);
+    await crowdsaleMock.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
+    await crowdsaleMock.sendTransaction({ value: 1001, from: investor })
+    await crowdsaleMock.sendTransaction({ value: 1001, from: wallet })
+
+    await crowdsaleMock.setDepositTokens(wallet, 0);
+
+    await expectThrow(this.crowdsale.refundDeposit(wallet));
   });
 
   it('claimtokens catch finilize', async function () {
