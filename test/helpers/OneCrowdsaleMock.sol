@@ -71,4 +71,12 @@ contract OneCrowdsaleMock is OneCrowdsale {
     DealDeposit storage deposit = depositMap[_wallet];
     deposit.transferred = _amount;
   }
+
+  function getFinalizedTime() constant public returns (uint256) {
+    return finalizedTime;
+  }
+
+  function getNow() constant public returns (uint256) {
+    return now;
+  }
 }
