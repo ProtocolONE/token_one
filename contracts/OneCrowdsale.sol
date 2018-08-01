@@ -88,6 +88,7 @@ contract OneCrowdsale is PreSaleCrowdsale {
   event TokenUnlocked();
 
   event AdditionalCliffTimeGreaterThanZero();
+  event NotTransferETHToRefund();
   
   /***********************************************************************/
   /**                              Members
@@ -336,6 +337,8 @@ function assignDepositTimeLock(
     if (ETHToRefund > 0) {
       deposit.depositedETH = 0;
       deposit.refundWallet.transfer(ETHToRefund);
+    } else {
+      emit NotTransferETHToRefund();
     }
 
     emit RefundedDeposit(_wallet, ETHToRefund, refundTokens);

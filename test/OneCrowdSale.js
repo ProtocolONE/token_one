@@ -887,7 +887,9 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
     await this.crowdsaleMock.sendTransaction({ value: 1001, from: wallet });
     await this.crowdsaleMock.setDepositedETH(wallet, 0);
 
-    let resultBack = await this.crowdsaleMock.refundDeposit(wallet);
-    assert.equal(resultBack.logs[0].event, 'RefundedDeposit');
+    let log = await this.crowdsaleMock.refundDeposit(wallet);
+
+    assert.equal(log.logs[0].event, 'NotTransferETHToRefund');
+    assert.equal(log.logs[1].event, 'RefundedDeposit');
   });
 });
