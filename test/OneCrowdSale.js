@@ -795,4 +795,28 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
     await increaseTimeTo(dateCliff);
     await this.crowdsaleMock.claimTokens.call({from : wallet});
   });
+
+  it('buy token catch 1', async function () {
+    // Adding deal to register
+
+    const bonusWallet = new web3.BigNumber(1000);
+
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
+
+    await expectThrow(this.crowdsale.sendTransaction({ value: 1001, from: refundWallet }));
+  });
+
+  it('buy token catch 2', async function () {
+    // Adding deal to register
+
+    const bonusWallet = new web3.BigNumber(1000);
+
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
+
+    await expectThrow(this.crowdsale.sendTransaction({ value: 900, from: investor }));
+  });  
 });
