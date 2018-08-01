@@ -61,4 +61,9 @@ contract OneCrowdsaleMock is OneCrowdsale {
       DealDeposit storage deposit = depositMap[_wallet];
       deposit.depositedTokens = _tokens;
   }
+
+  function setMainCliffAmount(address _wallet, uint256 _amount) {
+      DepositTimeLock storage timeLock = depositTimeLockMap[_wallet];
+      timeLock.mainCliffAmount = _amount;
+  }
 }

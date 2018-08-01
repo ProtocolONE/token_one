@@ -704,4 +704,49 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
     await increaseTimeTo(dateClif);
     await this.crowdsale.claimTokens.call({from : wallet});
   });
+
+  it('claimtokens cover main cliff 2', async function () {
+    this.crowdsaleMock = await CrowdsaleMock.new(
+        wallet,
+        walletTeam,
+        walletAdvisers,
+        walletOperating,
+        walletReserve,
+        walletBounty,
+        this.startTime,
+        this.endTime,
+        softCap,
+        hardCap
+    );
+
+    const bonusWallet = new web3.BigNumber(1000);
+
+    const mainCliffTime = new web3.BigNumber(30);
+    const mainCliffAmount = new web3.BigNumber(80);
+    const additionalCliffAmount = new web3.BigNumber(10);
+    const additionalCliffTime = new web3.BigNumber(40);
+
+    await increaseTimeTo(this.startTime);
+    await this.crowdsaleMock.addAdmin(owner);
+    await this.crowdsaleMock.assignDepositTimeLock(wallet, mainCliffAmount, mainCliffTime, additionalCliffAmount, additionalCliffTime);
+    await this.crowdsaleMock.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
+
+    let result = await this.crowdsaleMock.sendTransaction({ value: 1001, from: investor })
+    assert.equal(result.logs[0].event, 'DepositAdded');
+    let item = await this.crowdsaleMock.investorsMap.call(investor);
+    assert.equal(item[0], wallet);
+
+    await this.crowdsaleMock.updateInvestorKYC(wallet, true);
+
+    await increaseTimeTo(this.afterEndTime);
+    let resultFinish = await this.crowdsaleMock.finishCrowdsale();
+    assert.equal(resultFinish.logs[0].event, 'CrowdsakeFinished');
+
+    const dateCliff = this.afterEndTime + duration.days(10);
+
+    await this.crowdsaleMock.setMainCliffAmount(wallet, 0);
+
+    await increaseTimeTo(dateCliff);
+    await this.crowdsaleMock.claimTokens.call({from : wallet});
+  });
 });
