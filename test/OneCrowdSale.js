@@ -816,5 +816,18 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
     await this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
 
     await expectThrow(this.crowdsale.sendTransaction({ value: 900, from: investor }));
+  }); 
+
+  it('buy token catch 3', async function () {
+     const bonusWallet = new web3.BigNumber(1000);
+
+    await increaseTimeTo(this.startTime);
+    await this.crowdsale.addAdmin(owner);
+    await this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
+
+    await this.crowdsale.sendTransaction({ value: 1001, from: investor });
+
+    // deal already done
+    await expectThrow(this.crowdsale.sendTransaction({ value: 1001, from: investor }));
   });  
 });
