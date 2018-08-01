@@ -72,6 +72,11 @@ contract OneCrowdsaleMock is OneCrowdsale {
     deposit.transferred = _amount;
   }
 
+  function setDepositedETH(address _wallet, uint256 _amount) {
+    DealDeposit storage deposit = depositMap[_wallet];
+    deposit.depositedETH = _amount;
+  }
+
   function getFinalizedTime() constant public returns (uint256) {
     return finalizedTime;
   }
