@@ -54,16 +54,21 @@ contract OneCrowdsaleMock is OneCrowdsale {
   }
 
   function setDepositTokens(address _wallet, uint256 _tokens) {
-      if (depositMap[_wallet].refundWallet == address(0)) {
-          return;
-      }
+    if (depositMap[_wallet].refundWallet == address(0)) {
+        return;
+    }
 
-      DealDeposit storage deposit = depositMap[_wallet];
-      deposit.depositedTokens = _tokens;
+    DealDeposit storage deposit = depositMap[_wallet];
+    deposit.depositedTokens = _tokens;
   }
 
   function setMainCliffAmount(address _wallet, uint256 _amount) {
-      DepositTimeLock storage timeLock = depositTimeLockMap[_wallet];
-      timeLock.mainCliffAmount = _amount;
+    DepositTimeLock storage timeLock = depositTimeLockMap[_wallet];
+    timeLock.mainCliffAmount = _amount;
+  }
+
+  function setDepositTransferred(address _wallet, uint256 _amount) {
+    DealDeposit storage deposit = depositMap[_wallet];
+    deposit.transferred = _amount;
   }
 }
