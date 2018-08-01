@@ -79,4 +79,8 @@ contract OneCrowdsaleMock is OneCrowdsale {
   function getNow() constant public returns (uint256) {
     return now;
   }
+
+  function setRateMock(uint256 _rate) public {
+    rate = _rate;
+  }
 }

@@ -829,5 +829,30 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
 
     // deal already done
     await expectThrow(this.crowdsale.sendTransaction({ value: 1001, from: investor }));
+  });
+
+  it('zero rate catch', async function () {
+    const bonusWallet = new web3.BigNumber(1000);
+
+    this.crowdsaleMock = await CrowdsaleMock.new(
+        wallet,
+        walletTeam,
+        walletAdvisers,
+        walletOperating,
+        walletReserve,
+        walletBounty,
+        this.startTime,
+        this.endTime,
+        softCap,
+        hardCap
+    );
+
+    await increaseTimeTo(this.startTime);
+    await this.crowdsaleMock.addAdmin(owner);
+    await this.crowdsaleMock.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
+
+    this.crowdsaleMock.setRateMock(0);
+
+    await expectThrow(this.crowdsale.sendTransaction({ value: 1001, from: investor }));
   });  
 });
