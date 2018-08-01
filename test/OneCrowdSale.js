@@ -790,7 +790,7 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
     const dateCliff = this.afterEndTime + duration.days(10);
 
     await this.crowdsaleMock.setMainCliffAmount(wallet, 1);
-    await this.crowdsaleMock.setDepositTransferred(wallet, 1);
+    await this.crowdsaleMock.setDepositTransferred(wallet, 5005);
 
     await increaseTimeTo(dateCliff);
     await this.crowdsaleMock.claimTokens.call({from : wallet});
