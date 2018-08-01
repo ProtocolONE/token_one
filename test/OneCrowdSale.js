@@ -803,9 +803,7 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
 
     await increaseTimeTo(this.startTime);
     await this.crowdsale.addAdmin(owner);
-    await this.crowdsale.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
-
-    await expectThrow(this.crowdsale.sendTransaction({ value: 1001, from: refundWallet }));
+    await expectThrow(this.crowdsale.sendTransaction({ value: 1001, from: investor }));
   });
 
   it('buy token catch 2', async function () {
