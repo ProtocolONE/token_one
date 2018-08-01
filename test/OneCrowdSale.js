@@ -641,10 +641,10 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
     // Adding deal to register
     const bonusWallet = new web3.BigNumber(1000);
 
-    const mainCliffTime = duration.days(30);
+    const mainCliffTime = new web3.BigNumber(30); 
     const mainCliffAmount = new web3.BigNumber(80); 
     const additionalCliffAmount = new web3.BigNumber(10);
-    const additionalCliffTime = duration.days(40);
+    const additionalCliffTime = new web3.BigNumber(40); 
 
     await increaseTimeTo(this.startTime);
     await this.crowdsale.addAdmin(owner);
@@ -675,10 +675,10 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
     // Adding deal to register
     const bonusWallet = new web3.BigNumber(1000);
 
-    const mainCliffTime = duration.days(30);
+    const mainCliffTime = new web3.BigNumber(30);
     const mainCliffAmount = new web3.BigNumber(80); 
     const additionalCliffAmount = new web3.BigNumber(10);
-    const additionalCliffTime = duration.days(40);
+    const additionalCliffTime = new web3.BigNumber(40);
 
     await increaseTimeTo(this.startTime);
     await this.crowdsale.addAdmin(owner);
