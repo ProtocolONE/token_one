@@ -93,6 +93,10 @@ contract OneCrowdsaleMock is OneCrowdsale {
       return weiRaised;
   }
 
+  function setWeiRaised(uint256 _amount) {
+    weiRaised = _amount;
+  }
+
   function getHardCap() constant public returns (uint256) {
       return hardCap;
   }
