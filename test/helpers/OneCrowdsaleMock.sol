@@ -88,9 +88,4 @@ contract OneCrowdsaleMock is OneCrowdsale {
   function setRateMock(uint256 _rate) public {
     rate = _rate;
   }
-
-  function setDealWalletToNull(address _wallet) {
-    PreSaleConditions storage deal = investorsMap[_wallet];
-    deal.wallet = address(0);
-  }
 }
