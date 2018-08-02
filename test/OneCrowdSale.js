@@ -912,10 +912,7 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
     await increaseTimeTo(this.startTime);
     await this.crowdsaleMock.addAdmin(owner);
     await this.crowdsaleMock.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
-
     await this.crowdsaleMock.setWeiRaised(6000);
-    //console.log(await this.crowdsaleMock.getWeiRaised());
-    //console.log(await this.crowdsaleMock.getHardCap());
 
     await expectThrow(this.crowdsaleMock.sendTransaction({ value: 101, from: investor }));
   });
