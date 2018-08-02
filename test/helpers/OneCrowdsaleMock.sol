@@ -88,4 +88,12 @@ contract OneCrowdsaleMock is OneCrowdsale {
   function setRateMock(uint256 _rate) public {
     rate = _rate;
   }
+
+  function getWeiRaised() constant public returns (uint256) {
+      return weiRaised;
+  }
+
+  function getHardCap() constant public returns (uint256) {
+      return hardCap;
+  }
 }

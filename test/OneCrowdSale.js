@@ -853,7 +853,7 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
 
     this.crowdsaleMock.setRateMock(0);
 
-    await expectThrow(this.crowdsale.sendTransaction({ value: 1001, from: investor }));
+    await expectThrow(this.crowdsaleMock.sendTransaction({ value: 1001, from: investor }));
   });
 
   it('refund deposit without transfer ETHToRefund', async function () {
@@ -891,5 +891,28 @@ contract('OneCrowdsale', ([owner, wallet, walletTeam, walletAdvisers, walletOper
 
     assert.equal(log.logs[0].event, 'NotTransferETHToRefund');
     assert.equal(log.logs[1].event, 'RefundedDeposit');
+  });
+
+  it('hardCapNotReached test', async function () {
+    const bonusWallet = new web3.BigNumber(1000);
+
+    this.crowdsaleMock = await CrowdsaleMock.new(
+        wallet,
+        walletTeam,
+        walletAdvisers,
+        walletOperating,
+        walletReserve,
+        walletBounty,
+        this.startTime,
+        this.endTime,
+        softCap,
+        hardCap
+    );
+
+    await increaseTimeTo(this.startTime);
+    await this.crowdsaleMock.addAdmin(owner);
+    await this.crowdsaleMock.addUpdatePreSaleDeal(investor, wallet, bonusWallet, weiMinAmount, bonusRate, this.bonusRateTime, bonusShare);
+
+    await expectThrow(this.crowdsaleMock.sendTransaction({ value: 101, from: investor }));
   });
 });
